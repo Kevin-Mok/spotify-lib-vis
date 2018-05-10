@@ -1,6 +1,6 @@
-1. Use the pip tool to install virtualenv
+1. Use the pip tool to install `virtualenv`
 
-    [Link](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
+    [Guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
 
 2. Create a virtual environment in an empty directory: 
 
