@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'musicdata.urls'
+ROOT_URLCONF = 'musicvis.urls'
 
 TEMPLATES = [
     {
@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'musicdata.wsgi.application'
+WSGI_APPLICATION = 'musicvis.wsgi.application'
 
 
 # Database
