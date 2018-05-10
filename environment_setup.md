@@ -16,6 +16,12 @@
 
     `pip -r requirements.txt`
 
-6. All set!
+6. Run Django migrations
+
+    `python manage.py migrate`
+
+7. Start the server
+
+    `python manage.py runserver`
 
 
