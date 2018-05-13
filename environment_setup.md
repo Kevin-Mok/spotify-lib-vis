@@ -14,7 +14,7 @@
 
 5. cd into the repository root directory, install all dependencies using pip
 
-    `pip -r requirements.txt`
+    `pip install -r requirements.txt`
 
 6. Run Django migrations
 
