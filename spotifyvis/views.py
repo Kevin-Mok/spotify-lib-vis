@@ -77,7 +77,7 @@ def callback(request):
 
     response = requests.post('https://accounts.spotify.com/api/token', data = payload).json()
     # despite its name, datetime.today() returns a datetime object, not a date object
-    request.session['token_obtained_at'] = datetime.datetime.today()
+    request.session['token_obtained_at'] = str(datetime.datetime.today())
     request.session['access_token'] = response['access_token']
     request.session['refresh_token'] = response['refresh_token']
     request.session['valid_for'] = response['expires_in']
