@@ -77,9 +77,21 @@ def callback(request):
 
     response = requests.post('https://accounts.spotify.com/api/token', data = payload).json()
     # despite its name, datetime.today() returns a datetime object, not a date object
-    request.session['token_obtained_at'] = str(datetime.datetime.today())
+    # use datetime.strptime() to get a datetime object from a string
+    request.session['token_obtained_at'] = str(datetime.datetime.today()) 
     request.session['access_token'] = response['access_token']
     request.session['refresh_token'] = response['refresh_token']
     request.session['valid_for'] = response['expires_in']
     print(response)
-    return HttpResponse("At callback")
+
+    auth_token_str = "Bearer " + response['access_token']
+    headers = {
+        'Authorization': auth_token_str
+    }
+
+    user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
+    context = {
+        'user_name': user_data_response['display_name'],
+        'id': user_data_response['id'],
+    }
+    return render(request, 'spotifyvis/user_data.html', context)
