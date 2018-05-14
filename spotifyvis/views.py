@@ -5,7 +5,9 @@ import random
 import requests
 import os
 import urllib
-import datetime
+from datetime import datetime
+
+TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 
 def generate_random_string(length):
     """Generates a random string of a certain length
@@ -32,7 +34,7 @@ def token_expired(token_obtained_at, valid_for):
         token_obtained_at: datetime object representing the date and time when the token was obtained
         valid_for: the time duration for which the token is valid, in seconds
     """
-    time_elapsed = (datetime.datetime.today() - token_obtained_at).seconds
+    time_elapsed = (datetime.today() - token_obtained_at).total_seconds()
     return time_elapsed >= valid_for
 
 
@@ -78,13 +80,33 @@ def callback(request):
     response = requests.post('https://accounts.spotify.com/api/token', data = payload).json()
     # despite its name, datetime.today() returns a datetime object, not a date object
     # use datetime.strptime() to get a datetime object from a string
-    request.session['token_obtained_at'] = str(datetime.datetime.today()) 
+    request.session['token_obtained_at'] = datetime.strftime(datetime.today(), TIME_FORMAT) 
     request.session['access_token'] = response['access_token']
     request.session['refresh_token'] = response['refresh_token']
     request.session['valid_for'] = response['expires_in']
     print(response)
 
-    auth_token_str = "Bearer " + response['access_token']
+    return redirect('user_data')
+
+
+def user_data(request):
+
+    token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
+    valid_for = int(request.session['valid_for'])
+
+    if token_expired(token_obtained_at, valid_for):
+        req_body = {
+            'grant_type': 'refresh_token',
+            'refresh_token': request.session['refresh_token'],
+            'client_id': os.environ['SPOTIFY_CLIENT_ID'],
+            'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
+        }
+        
+        refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data = req_body).json()
+        request.session['access_token'] = refresh_token_response['access_token']
+        request.session['valid_for'] = refresh_token_response['expires_in']
+
+    auth_token_str = "Bearer " + request.session['access_token']
     headers = {
         'Authorization': auth_token_str
     }
