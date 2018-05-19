@@ -117,3 +117,32 @@ def user_data(request):
         'id': user_data_response['id'],
     }
     return render(request, 'spotifyvis/user_data.html', context)
+
+
+
+def get_features(track_id, token):
+    """Returns the features of a soundtrack
+
+    Args:
+        track_id: the id of the soundtrack, needed to query the Spotify API
+        token: an access token for the Spotify API
+ 
+    Returns:
+        A dictionary with the features as its keys
+    """
+
+    headers = {
+        'Authorization': token,
+    }
+    response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
+    features_dict = {}
+
+    # Data that we don't need
+    useless_keys = [ 
+        "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature",
+    ]
+    for key, val in response.items():
+        if key not in useless_keys:
+            features_dict[key] = val
+
+    return features_dict
