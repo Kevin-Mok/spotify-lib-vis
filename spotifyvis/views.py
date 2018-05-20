@@ -146,3 +146,21 @@ def get_features(track_id, token):
             features_dict[key] = val
 
     return features_dict
+
+
+def update_std_dev(cur_mean, new_data_point, sample_size):
+    """Calculates the standard deviation for a sample without storing all data points
+
+    Args:
+        cur_mean: the current mean for N = (sample_size - 1)
+        new_data_point: a new data point
+        sample_size: sample size including the new data point
+    
+    Returns:
+        (updated_mean, std_dev)
+    """
+    # This is an implementationof Welford's method
+    # http://jonisalonen.com/2013/deriving-welfords-method-for-computing-variance/
+    new_mean = ((sample_size - 1) * cur_mean + new_data_point) / sample_size
+    std_dev = (new_data_point - new_mean) * (new_data_point - cur_mean)
+    return new_mean, std_dev
