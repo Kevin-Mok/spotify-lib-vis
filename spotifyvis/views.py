@@ -102,7 +102,7 @@ def callback(request):
     request.session['access_token'] = response['access_token']
     request.session['refresh_token'] = response['refresh_token']
     request.session['valid_for'] = response['expires_in']
-    print(response)
+    #  print(response)
 
     return redirect('user_data')
 
@@ -111,7 +111,6 @@ def callback(request):
 #  user_data {{{ # 
 
 def user_data(request):
-
     token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
     valid_for = int(request.session['valid_for'])
 
@@ -138,7 +137,8 @@ def user_data(request):
         'id': user_data_response['id'],
     }
 
-    parse_library(headers, 4)
+    tracks_to_query = 50
+    parse_library(headers, tracks_to_query)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
@@ -155,7 +155,7 @@ def parse_library(headers, tracks):
     """
     #  TODO: implement importing entire library with 0 as tracks param
     # number of tracks to get with each call
-    limit = 2
+    limit = 50
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
@@ -164,6 +164,9 @@ def parse_library(headers, tracks):
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
         for track_dict in saved_tracks_response['items']:
             get_track_info(track_dict['track'])
+            #  get_genre(headers, track_dict['track']['album']['id'])
+            for artist_dict in track_dict['track']['artists']:
+                increase_artist_count(headers, artist_dict['name'], artist_dict['id'])
         # calculates num_songs with offset + songs retrieved
         library_stats['num_songs'] = offset + len(saved_tracks_response['items'])
         offset += limit
@@ -190,6 +193,32 @@ def increase_nested_key(top_key, nested_key):
 
 #  }}} increase_nested_key # 
 
+#  increase_artist_count {{{ # 
+
+def increase_artist_count(headers, artist_name, artist_id):
+    """Increases count for artist and genre in library_stats. Also looks up genre of artist if new key.
+
+    :headers: For making the API call.
+    :artist_name: Artist to increase count for.
+    :artist_id: The Spotify ID for the artist.
+    :returns: None
+
+    """
+    if artist_name not in library_stats['artists']:
+        library_stats['artists'][artist_name] = {}
+        library_stats['artists'][artist_name]['count'] = 1
+        # set genres for artist
+        artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_id, headers=headers).json()
+        library_stats['artists'][artist_name]['genres'] = artist_response['genres']
+    else:
+        library_stats['artists'][artist_name]['count'] += 1
+
+    # update genre counts
+    for genre in library_stats['artists'][artist_name]['genres']:
+        increase_nested_key('genres', genre)
+
+#  }}} increase_artist_count # 
+
 #  get_track_info {{{ # 
 
 def get_track_info(track_dict):
@@ -207,11 +236,41 @@ def get_track_info(track_dict):
     increase_nested_key('year_released', year_released)
     
     # artist
-    artist_names = [artist['name'] for artist in track_dict['artists']]
-    for artist_name in artist_names:
-        increase_nested_key('artists', artist_name)
+    #  artist_names = [artist['name'] for artist in track_dict['artists']]
+    #  for artist_name in artist_names:
+        #  increase_nested_key('artists', artist_name)
 
     # runtime
     library_stats['total_runtime'] += float(track_dict['duration_ms']) / 60
 
 #  }}} get_track_info # 
+
+#  get_genre {{{ # 
+
+# Deprecated. Will remove in next commit. I queried 300 albums and none of them had genres. 
+# The organization app gets the genre from the artist, and I've implemented other functions
+# to do the same.
+def get_genre(headers, album_id):
+    """Updates library_stats with this track's genre.
+
+    :headers: For making the API call.
+    :album_id: The Spotify ID for the album.
+    :returns: None
+
+    """
+    album_response = requests.get('https://api.spotify.com/v1/albums/' + album_id, headers=headers).json()
+    pprint.pprint(album_response['genres'])
+    for genre in album_response['genres']:
+        #  print(genre)
+        increase_nested_key('genres', genre);
+
+#  }}} get_genre # 
+
+#  def calculate_genres_from_artists(headers):
+    #  """Tallies up genre counts based on artists in library_stats.
+
+    #  :headers: For making the API call.
+    #  :returns: None
+
+    #  """
+    #  album_response = requests.get('https://api.spotify.com/v1/albums/' + album_id, headers=headers).json()
