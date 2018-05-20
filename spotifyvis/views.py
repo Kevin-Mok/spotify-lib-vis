@@ -120,20 +120,17 @@ def user_data(request):
 
 
 
-def get_features(track_id, token):
-    """Returns the features of a soundtrack
+def get_audio_features(track_id, headers):
+    """Returns the audio features of a soundtrack
 
     Args:
         track_id: the id of the soundtrack, needed to query the Spotify API
-        token: an access token for the Spotify API
+        headers: headers containing the API token
  
     Returns:
         A dictionary with the features as its keys
     """
-
-    headers = {
-        'Authorization': token,
-    }
+    
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
     features_dict = {}
 
@@ -164,3 +161,30 @@ def update_std_dev(cur_mean, new_data_point, sample_size):
     new_mean = ((sample_size - 1) * cur_mean + new_data_point) / sample_size
     std_dev = (new_data_point - new_mean) * (new_data_point - cur_mean)
     return new_mean, std_dev
+
+
+def update_audio_feature_stats(feature, new_data_point, sample_size):
+    """Updates the audio feature statistics in library_stats
+
+    Args:
+        feature: the audio feature to be updated (string)
+        new_data_point: new data to update the stats with
+        sample_size: sample size including the new data point
+    
+    Returns:
+        None
+    """
+    # first time the feature is considered
+    if sample_size < 2:
+        library_stats['audio_features'][feature] = {
+            "average": new_data_point,
+            "std_dev": 0,
+        }
+
+    else:
+        current_mean = library_stats['audio_features'][feature]['average']
+        updated_mean, std_dev = update_std_dev(current_mean, new_data_point, sample_size)
+
+        library_stats['audio_features'][feature]['average'] = updated_mean
+        library_stats['audio_features'][feature]['std_dev'] = std_dev
+
