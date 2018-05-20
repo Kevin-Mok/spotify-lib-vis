@@ -4,5 +4,5 @@ db.sqlite3
 .idea/
 .vscode/*
 
-spotify-keys.sh
+api-keys.sh
 Pipfile

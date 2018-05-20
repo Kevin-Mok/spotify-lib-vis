@@ -169,7 +169,7 @@ def parse_library(headers, tracks):
             num_samples += 1 
             get_track_info(track_dict['track'])
             #  get_genre(headers, track_dict['track']['album']['id'])
-            audio_features_dict = get_audio_features(headers, track_dict['id'])
+            audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
             for feature, feature_data in audio_features_dict.items():
                 update_audio_feature_stats(feature, feature_data, num_samples)
             for artist_dict in track_dict['track']['artists']:
