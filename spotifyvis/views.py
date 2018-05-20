@@ -159,12 +159,19 @@ def parse_library(headers, tracks):
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
-    for i in range(0, tracks, limit):
+    for _ in range(0, tracks, limit):
         payload['offset'] = str(offset)
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
+        num_samples = offset
         for track_dict in saved_tracks_response['items']:
+            # Track the number of samples for calculating
+            # audio feature averages and standard deviations on the fly
+            num_samples += 1 
             get_track_info(track_dict['track'])
             #  get_genre(headers, track_dict['track']['album']['id'])
+            audio_features_dict = get_audio_features(headers, track_dict['id'])
+            for feature, feature_data in audio_features_dict.items():
+                update_audio_feature_stats(feature, feature_data, num_samples)
             for artist_dict in track_dict['track']['artists']:
                 increase_artist_count(headers, artist_dict['name'], artist_dict['id'])
         # calculates num_songs with offset + songs retrieved
@@ -174,6 +181,80 @@ def parse_library(headers, tracks):
     pprint.pprint(library_stats)
 
 #  }}} parse_library # 
+
+def get_audio_features(headers, track_id):
+    """Returns the audio features of a soundtrack
+
+    Args:
+        headers: headers containing the API token
+        track_id: the id of the soundtrack, needed to query the Spotify API
+        
+    Returns:
+        A dictionary with the features as its keys
+    """
+    
+    response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
+    features_dict = {}
+
+    # Data that we don't need
+    useless_keys = [ 
+        "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature",
+    ]
+    for key, val in response.items():
+        if key not in useless_keys:
+            features_dict[key] = val
+
+    return features_dict
+
+
+def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
+    """Calculates the standard deviation for a sample without storing all data points
+
+    Args:
+        cur_mean: the current mean for N = (sample_size - 1)
+        cur_std_dev: the current standard deviation for N = (sample_size - 1)
+        new_data_point: a new data point
+        sample_size: sample size including the new data point
+    
+    Returns:
+        (new_mean, new_std_dev)
+    """
+    # This is an implementationof Welford's method
+    # http://jonisalonen.com/2013/deriving-welfords-method-for-computing-variance/
+    new_mean = ((sample_size - 1) * cur_mean + new_data_point) / sample_size
+    delta_variance = (new_data_point - new_mean) * (new_data_point - cur_mean)
+    new_std_dev = math.sqrt(
+        (math.pow(cur_std_dev, 2) * (sample_size - 2) + delta_variance) / (
+        sample_size - 1
+    ))
+    return new_mean, new_std_dev
+
+
+def update_audio_feature_stats(feature, new_data_point, sample_size):
+    """Updates the audio feature statistics in library_stats
+
+    Args:
+        feature: the audio feature to be updated (string)
+        new_data_point: new data to update the stats with
+        sample_size: sample size including the new data point
+    
+    Returns:
+        None
+    """
+    # first time the feature is considered
+    if sample_size < 2:
+        library_stats['audio_features'][feature] = {
+            "average": new_data_point,
+            "std_dev": 0,
+        }
+    else:
+        cur_mean = library_stats['audio_features'][feature]['average']
+        cur_std_dev = library_stats['audio_features'][feature]['std_dev']
+        new_mean, new_std_dev = update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size)
+
+        library_stats['audio_features'][feature]['average'] = new_mean
+        library_stats['audio_features'][feature]['std_dev'] = new_std_dev
+
 
 #  increase_nested_key {{{ # 
 
