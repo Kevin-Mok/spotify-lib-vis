@@ -1,1 +1,0 @@
-- login to Spotify using API and console.log number of songs in library
