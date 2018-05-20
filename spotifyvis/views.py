@@ -182,13 +182,13 @@ def parse_library(headers, tracks):
 
 #  }}} parse_library # 
 
-def get_audio_features(track_id, headers):
+def get_audio_features(headers, track_id):
     """Returns the audio features of a soundtrack
 
     Args:
-        track_id: the id of the soundtrack, needed to query the Spotify API
         headers: headers containing the API token
- 
+        track_id: the id of the soundtrack, needed to query the Spotify API
+        
     Returns:
         A dictionary with the features as its keys
     """
