@@ -219,7 +219,7 @@ def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     Returns:
         (new_mean, new_std_dev)
     """
-    # This is an implementationof Welford's method
+    # This is an implementation of Welford's method
     # http://jonisalonen.com/2013/deriving-welfords-method-for-computing-variance/
     new_mean = ((sample_size - 1) * cur_mean + new_data_point) / sample_size
     delta_variance = (new_data_point - new_mean) * (new_data_point - cur_mean)
