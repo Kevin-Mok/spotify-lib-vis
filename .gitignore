@@ -3,3 +3,6 @@ db.sqlite3
 *.bak
 .idea/
 .vscode/*
+
+spotify-keys.sh
+Pipfile
