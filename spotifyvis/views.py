@@ -1,3 +1,5 @@
+#  imports {{{ # 
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
 import math
@@ -9,8 +11,14 @@ import json
 import pprint
 from datetime import datetime
 
+#  }}} imports # 
+
+#  global vars {{{ # 
+
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 library_stats = {"audio_features":{}, "genres":{}, "year_released":{}, "artists":{}, "num_songs":0, "popularity":[], "total_runtime":0}
+
+#  }}} global vars # 
 
 #  generate_random_string {{{ # 
 
@@ -131,14 +139,15 @@ def user_data(request):
         'Authorization': auth_token_str
     }
 
+    tracks_to_query = 5
+    parse_library(headers, tracks_to_query)
+
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
     context = {
         'user_name': user_data_response['display_name'],
         'id': user_data_response['id'],
+        'genre_dict': library_stats['genres']
     }
-
-    tracks_to_query = 5
-    parse_library(headers, tracks_to_query)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
@@ -182,6 +191,8 @@ def parse_library(headers, tracks):
 
 #  }}} parse_library # 
 
+#  get_audio_features {{{ # 
+
 def get_audio_features(headers, track_id):
     """Returns the audio features of a soundtrack
 
@@ -206,6 +217,9 @@ def get_audio_features(headers, track_id):
 
     return features_dict
 
+#  }}} get_audio_features # 
+
+#  update_std_dev {{{ # 
 
 def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     """Calculates the standard deviation for a sample without storing all data points
@@ -229,6 +243,9 @@ def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     ))
     return new_mean, new_std_dev
 
+#  }}} update_std_dev # 
+
+#  update_audio_feature_stats {{{ # 
 
 def update_audio_feature_stats(feature, new_data_point, sample_size):
     """Updates the audio feature statistics in library_stats
@@ -255,6 +272,7 @@ def update_audio_feature_stats(feature, new_data_point, sample_size):
         library_stats['audio_features'][feature]['average'] = new_mean
         library_stats['audio_features'][feature]['std_dev'] = new_std_dev
 
+#  }}} update_audio_feature_stats # 
 
 #  increase_nested_key {{{ # 
 
@@ -331,8 +349,16 @@ def calculate_genres_from_artists(headers):
     """
     for artist_entry in library_stats['artists'].values():
         artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_entry['id'], headers=headers).json()
+
         # increase each genre count by artist count
-        for genre in artist_response['genres']:
-            increase_nested_key('genres', genre, artist_entry['count'])
+        #  for genre in artist_response['genres']:
+            #  print(genre, end='')
+            #  increase_nested_key('genres', genre, artist_entry['count'])
+        #  print('')
+
+        # only use first genre for simplicity right now
+        if len(artist_response['genres']) > 0:
+            print(artist_response['genres'][0])
+            increase_nested_key('genres', artist_response['genres'][0], artist_entry['count'])
 
 #  }}} calculate_genres_from_artists # 
