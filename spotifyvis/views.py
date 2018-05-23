@@ -139,7 +139,18 @@ def user_data(request):
     }
 
     tracks_to_query = 5
-    library_stats = {"audio_features":{}, "genres":{}, "year_released":{}, "artists":{}, "num_songs":0, "popularity":[], "total_runtime":0}
+    library_stats = {
+        "audio_features":{}, 
+        "genres":{}, 
+        "year_released":{}, 
+        "artists":{}, 
+        "num_songs": 0, 
+        "popularity": {
+            "average": 0,
+            "std_dev": 0,
+        },   
+        "total_runtime": 0
+    }
     parse_library(headers, tracks_to_query, library_stats)
     return render(request, 'spotifyvis/user_data.html', context)
 

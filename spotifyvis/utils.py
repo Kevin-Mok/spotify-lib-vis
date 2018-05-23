@@ -28,7 +28,7 @@ def parse_library(headers, tracks, library_stats):
             # Track the number of samples for calculating
             # audio feature averages and standard deviations on the fly
             num_samples += 1 
-            get_track_info(track_dict['track'], library_stats)
+            get_track_info(track_dict['track'], library_stats, num_samples)
             #  get_genre(headers, track_dict['track']['album']['id'])
             audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
             for feature, feature_data in audio_features_dict.items():
@@ -115,8 +115,10 @@ def update_audio_feature_stats(feature, new_data_point, sample_size, library_sta
         cur_std_dev = library_stats['audio_features'][feature]['std_dev']
         new_mean, new_std_dev = update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size)
 
-        library_stats['audio_features'][feature]['average'] = new_mean
-        library_stats['audio_features'][feature]['std_dev'] = new_std_dev
+        library_stats['audio_features'][feature] = {
+            "average": new_mean,
+            "std_dev": new_std_dev
+        }
 
 
 #  increase_nested_key {{{ # 
@@ -161,20 +163,47 @@ def increase_artist_count(headers, artist_name, artist_id, library_stats):
 
 #  }}} increase_artist_count # 
 
+def update_popularity_stats(new_data_point, library_stats, sample_size):
+    """Updates the popularity statistics in library_stats
+
+    Args:
+        new_data_point: new data to update the popularity stats with
+        library_stats: Dictionary containing data mined from user's Spotify library
+        sample_size: The sample size including the new data
+    
+    Returns:
+        None
+    """
+    if sample_size < 2:
+        library_stats['popularity'] = {
+            "average": new_data_point,
+            "std_dev": 0,
+        }
+    else :
+        cur_mean_popularity = library_stats['popularity']['average']
+        cur_popularity_stdev = library_stats['popularity']['std_dev']
+        new_mean, new_std_dev = update_std_dev(
+            cur_mean_popularity, cur_popularity_stdev, new_data_point, sample_size)
+        library_stats['popularity'] = {
+            "average": new_mean,
+            "std_dev": new_std_dev,
+        }
+
 #  get_track_info {{{ # 
 
-def get_track_info(track_dict, library_stats):
+def get_track_info(track_dict, library_stats, sample_size):
     """Get all the info from the track_dict directly returned by the API call in parse_library.
 
     :track_dict: Dict returned from the API call containing the track info.
     :library_stats: Dictionary containing the data mined from user's Spotify library
+    :sample_size: The sample size so far including this track
 
     :returns: None
 
     """
-    #  popularity
-    library_stats['popularity'].append(track_dict['popularity'])
-
+    # popularity
+    update_popularity_stats(track_dict['popularity'], library_stats, sample_size)
+        
     # year
     year_released = track_dict['album']['release_date'].split('-')[0]
     increase_nested_key('year_released', year_released, library_stats)
