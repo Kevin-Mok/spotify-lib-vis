@@ -8,7 +8,7 @@ import urllib
 import json
 import pprint
 from datetime import datetime
-from .utils import *
+from .utils import parse_library, process_library_stats
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 library_stats = {"audio_features":{}, "genres":{}, "year_released":{}, "artists":{}, "num_songs":0, "popularity":[], "total_runtime":0}
@@ -152,6 +152,10 @@ def user_data(request):
         "total_runtime": 0
     }
     parse_library(headers, tracks_to_query, library_stats)
+    processed_library_stats = process_library_stats(library_stats)
+    print("================================================")
+    print("Processed data follows\n")
+    pprint.pprint(processed_library_stats)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 

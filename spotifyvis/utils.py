@@ -214,7 +214,7 @@ def get_track_info(track_dict, library_stats, sample_size):
         #  increase_nested_key('artists', artist_name)
 
     # runtime
-    library_stats['total_runtime'] += float(track_dict['duration_ms']) / 60
+    library_stats['total_runtime'] += float(track_dict['duration_ms']) / (1000 * 60)
 
 #  }}} get_track_info # 
 
@@ -236,3 +236,54 @@ def calculate_genres_from_artists(headers, library_stats):
             increase_nested_key('genres', genre, library_stats, artist_entry['count'])
 
 #  }}} calculate_genres_from_artists # 
+
+def process_library_stats(library_stats):
+    """Processes library_stats into format more suitable for D3 consumption
+
+    Args:
+        library_stats: Dictionary containing the data mined from user's Spotify library
+    
+    Returns:
+        A new dictionary that contains the data in library_stats, in a format more suitable for D3 consumption
+    """
+    processed_library_stats = {}
+    for key in library_stats:
+        if key == 'artists' or key == 'genres' or key == 'year_released':
+            for inner_key in library_stats[key]:
+                if key not in processed_library_stats:
+                    processed_library_stats[key] = []
+                processed_item_key = '' # identifier key for each dict in the list
+                count = 0
+                if 'artist' in key:
+                    processed_item_key = 'name'
+                    count = library_stats[key][inner_key]['count']
+                elif 'genre' in key:
+                    processed_item_key = 'genre'
+                    count = library_stats[key][inner_key]
+                else:
+                    processed_item_key = 'year'
+                    count = library_stats[key][inner_key]
+
+                processed_library_stats[key].append({
+                    processed_item_key: inner_key,
+                    "count": count
+                })
+        elif key == 'audio_features':
+            for audio_feature in library_stats[key]:
+                if 'audio_features' not in processed_library_stats:
+                    processed_library_stats['audio_features'] = []
+                processed_library_stats['audio_features'].append({
+                    'feature': audio_feature,
+                    'average': library_stats[key][audio_feature]['average'],
+                    'std_dev': library_stats[key][audio_feature]['std_dev']
+                })
+        # TODO: Not sure about final form for 'popularity'
+        # elif key == 'popularity':
+        #     processed_library_stats[key] = []
+        #     processed_library_stats[key].append({
+
+        #     })
+        elif key == 'num_songs' or key == 'total_runtime' or key == 'popularity':
+            processed_library_stats[key] = library_stats[key]
+    
+    return processed_library_stats
