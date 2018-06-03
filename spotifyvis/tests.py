@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .views import update_std_dev
+from .utils import update_std_dev
 import math
 # Create your tests here.
 
