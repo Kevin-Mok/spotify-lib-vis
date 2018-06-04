@@ -1,5 +1,7 @@
 from django.db import models
 
+#  Artist {{{ # 
+
 class Artist(models.Model):
 
     class Meta:
@@ -14,6 +16,9 @@ class Artist(models.Model):
     def __str__(self):
         return self.name
 
+#  }}} Artist # 
+
+#  User {{{ # 
 
 class User(models.Model):
     
@@ -27,6 +32,9 @@ class User(models.Model):
     def __str__(self):
         return self.username
 
+#  }}} User # 
+
+#  Track {{{ # 
 
 class Track(models.Model):
     
@@ -46,6 +54,9 @@ class Track(models.Model):
     def __str__(self):
         return self.name 
 
+#  }}} Track # 
+
+#  AudioFeatures {{{ # 
 
 class AudioFeatures(models.Model):
         
@@ -66,4 +77,4 @@ class AudioFeatures(models.Model):
     def __str__(self):
         return super(AudioFeatures, self).__str__()
 
-
+#  }}} AudioFeatures # 

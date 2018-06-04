@@ -1,6 +1,11 @@
+#  imports {{{ # 
+
 import requests
 import math
 import pprint
+from models import *
+
+#  }}} imports # 
 
 #  parse_library {{{ # 
 
@@ -44,6 +49,8 @@ def parse_library(headers, tracks, library_stats):
 
 #  }}} parse_library # 
 
+#  get_audio_features {{{ # 
+
 def get_audio_features(headers, track_id):
     """Returns the audio features of a soundtrack
 
@@ -71,6 +78,9 @@ def get_audio_features(headers, track_id):
 
     return features_dict
 
+#  }}} get_audio_features # 
+
+#  update_std_dev {{{ # 
 
 def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     """Calculates the standard deviation for a sample without storing all data points
@@ -94,6 +104,9 @@ def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     ))
     return new_mean, new_std_dev
 
+#  }}} update_std_dev # 
+
+#  update_audio_feature_stats {{{ # 
 
 def update_audio_feature_stats(feature, new_data_point, sample_size, library_stats):
     """Updates the audio feature statistics in library_stats
@@ -124,6 +137,7 @@ def update_audio_feature_stats(feature, new_data_point, sample_size, library_sta
             "std_dev": new_std_dev
         }
 
+#  }}} update_audio_feature_stats # 
 
 #  increase_nested_key {{{ # 
 
@@ -167,6 +181,8 @@ def increase_artist_count(headers, artist_name, artist_id, library_stats):
 
 #  }}} increase_artist_count # 
 
+#  update_popularity_stats {{{ # 
+
 def update_popularity_stats(new_data_point, library_stats, sample_size):
     """Updates the popularity statistics in library_stats
 
@@ -192,6 +208,8 @@ def update_popularity_stats(new_data_point, library_stats, sample_size):
             "average": new_mean,
             "std_dev": new_std_dev,
         }
+
+#  }}}  update_popularity_stats # 
 
 #  get_track_info {{{ # 
 
@@ -240,6 +258,8 @@ def calculate_genres_from_artists(headers, library_stats):
             increase_nested_key('genres', genre, library_stats, artist_entry['count'])
 
 #  }}} calculate_genres_from_artists # 
+
+#  process_library_stats {{{ # 
 
 def process_library_stats(library_stats):
     """Processes library_stats into format more suitable for D3 consumption
@@ -291,3 +311,5 @@ def process_library_stats(library_stats):
             processed_library_stats[key] = library_stats[key]
     
     return processed_library_stats
+
+#  }}} process_library_stats # 
