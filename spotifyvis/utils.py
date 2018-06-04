@@ -27,12 +27,13 @@ def parse_library(headers, tracks, library_stats):
         for track_dict in saved_tracks_response['items']:
             # Track the number of samples for calculating
             # audio feature averages and standard deviations on the fly
-            num_samples += 1 
             get_track_info(track_dict['track'], library_stats, num_samples)
             #  get_genre(headers, track_dict['track']['album']['id'])
             audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
-            for feature, feature_data in audio_features_dict.items():
-                update_audio_feature_stats(feature, feature_data, num_samples, library_stats)
+            if len(audio_features_dict) != 0:
+                num_samples += 1 
+                for feature, feature_data in audio_features_dict.items():
+                    update_audio_feature_stats(feature, feature_data, num_samples, library_stats)
             for artist_dict in track_dict['track']['artists']:
                 increase_artist_count(headers, artist_dict['name'], artist_dict['id'], library_stats)
         # calculates num_songs with offset + songs retrieved
@@ -51,10 +52,13 @@ def get_audio_features(headers, track_id):
         track_id: the id of the soundtrack, needed to query the Spotify API
         
     Returns:
-        A dictionary with the features as its keys
+        A dictionary with the features as its keys, if audio feature data is missing for the track, 
+        an empty dictionary is returned.
     """
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
+    if 'error' in response:
+        return {}
     features_dict = {}
 
     # Data that we don't need
