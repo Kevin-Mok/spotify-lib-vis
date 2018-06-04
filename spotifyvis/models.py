@@ -1,7 +1,7 @@
 from django.db import models
 
-class Artist(models.Model):
 
+class Artist(models.Model):
     class Meta:
         verbose_name = "Artist"
         verbose_name_plural = "Artists"
@@ -16,13 +16,12 @@ class Artist(models.Model):
 
 
 class User(models.Model):
-    
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
 
-    user_id = models.CharField(primary_key=True, max_length=30)
-    username = models.CharField(max_length=30)
+    user_id = models.CharField(primary_key=True, max_length=30) # the user's Spotify ID
+    username = models.CharField(max_length=30) # User's Spotify user name, if set
 
     def __str__(self):
         return self.username
@@ -65,5 +64,3 @@ class AudioFeatures(models.Model):
 
     def __str__(self):
         return super(AudioFeatures, self).__str__()
-
-
