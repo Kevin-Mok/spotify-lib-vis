@@ -11,11 +11,12 @@ import json
 import pprint
 from datetime import datetime
 from .utils import parse_library, process_library_stats
+from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-library_stats = {"audio_features":{}, "genres":{}, "year_released":{}, "artists":{}, "num_songs":0, "popularity":[], "total_runtime":0}
+TRACKS_TO_QUERY = 5
 
 #  generate_random_string {{{ # 
 
@@ -137,12 +138,18 @@ def user_data(request):
     }
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
+    request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
+    request.session['user_name'] = user_data_response['display_name']
+    user = None # will be set to the current user object later
+    #  try:
+        #  user = User.objects.get(user_id=request.session['user_id'])
+    #  except User.DoesNotExist:
+        #  user = User.objects.create(user_id=request.session['user_id'], user_name=request.session['user_name'])
     context = {
-        'user_name': user_data_response['display_name'],
-        'id': user_data_response['id'],
+       'user_name': user_data_response['display_name'],
+       'id': user_data_response['id'],
     }
 
-    tracks_to_query = 5
     library_stats = {
         "audio_features":{}, 
         "genres":{}, 
@@ -155,7 +162,7 @@ def user_data(request):
         },   
         "total_runtime": 0
     }
-    parse_library(headers, tracks_to_query, library_stats)
+    parse_library(headers, TRACKS_TO_QUERY, library_stats, user)
     processed_library_stats = process_library_stats(library_stats)
     print("================================================")
     print("Processed data follows\n")

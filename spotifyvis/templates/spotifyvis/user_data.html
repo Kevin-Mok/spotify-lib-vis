@@ -15,10 +15,11 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
         <p>Logged in as {{ id }}</p>
+        <h2>Display name {{ user_name }}</h2>
 				<ul>
 					{% for genre_name, genre_count in genre_dict.items %}
 						<li>{{ genre_name }} - {{ genre_count }}</li>
 					{% endfor %}
-				</ul>
+                </ul>
     </body>
 </html>
