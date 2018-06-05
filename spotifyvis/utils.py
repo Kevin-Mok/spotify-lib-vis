@@ -51,7 +51,7 @@ def parse_library(headers, tracks, library_stats, user):
         library_stats['num_songs'] = offset + len(saved_tracks_response['items'])
         offset += limit
     calculate_genres_from_artists(headers, library_stats)
-    pprint.pprint(library_stats)
+    #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
 
@@ -185,6 +185,14 @@ def increase_artist_count(headers, artist_name, artist_id, library_stats):
     else:
         library_stats['artists'][artist_name]['count'] += 1
 
+    # add artist to database if new
+    if len(Artist.objects.filter(artist_id__contains=artist_id)) == 0:
+        new_artist = Artist(
+                artist_id=artist_id,
+                name=artist_name,
+                )
+        new_artist.save()
+
 #  }}} increase_artist_count # 
 
 #  update_popularity_stats {{{ # 
@@ -236,11 +244,6 @@ def get_track_info(track_dict, library_stats, sample_size):
     year_released = track_dict['album']['release_date'].split('-')[0]
     increase_nested_key('year_released', year_released, library_stats)
     
-    # artist
-    #  artist_names = [artist['name'] for artist in track_dict['artists']]
-    #  for artist_name in artist_names:
-        #  increase_nested_key('artists', artist_name)
-
     # runtime
     library_stats['total_runtime'] += float(track_dict['duration_ms']) / (1000 * 60)
 
@@ -262,6 +265,9 @@ def calculate_genres_from_artists(headers, library_stats):
         # increase each genre count by artist count
         for genre in artist_response['genres']:
             increase_nested_key('genres', genre, library_stats, artist_entry['count'])
+
+        # update genre for artist in database with top genre
+        Artist.objects.filter(artist_id=artist_entry['id']).update(genre=artist_response['genres'][0])
 
 #  }}} calculate_genres_from_artists # 
 

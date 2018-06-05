@@ -164,9 +164,9 @@ def user_data(request):
     }
     parse_library(headers, TRACKS_TO_QUERY, library_stats, user)
     processed_library_stats = process_library_stats(library_stats)
-    print("================================================")
-    print("Processed data follows\n")
-    pprint.pprint(processed_library_stats)
+    #  print("================================================")
+    #  print("Processed data follows\n")
+    #  pprint.pprint(processed_library_stats)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
