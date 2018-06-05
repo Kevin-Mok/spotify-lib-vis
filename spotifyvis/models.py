@@ -21,7 +21,7 @@ class User(models.Model):
         verbose_name_plural = "Users"
 
     user_id = models.CharField(primary_key=True, max_length=30) # the user's Spotify ID
-    username = models.CharField(max_length=30) # User's Spotify user name, if set
+    user_name = models.CharField(max_length=30, blank=True) # User's Spotify user name, if set
 
     def __str__(self):
         return self.username

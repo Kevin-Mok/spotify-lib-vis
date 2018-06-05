@@ -135,16 +135,21 @@ def user_data(request):
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
     request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
-    request.session['user_name'] = user_data_response['display_name']
+    display_name = user_data_response['display_name']
+    if display_name is not None:
+        request.session['user_name'] = display_name
+    else:
+        request.session['user_name'] = ""
     user = None # will be set to the current user object later
     try:
         user = User.objects.get(user_id=request.session['user_id'])
     except User.DoesNotExist:
         user = User.objects.create(user_id=request.session['user_id'], user_name=request.session['user_name'])
-    # context = {
-    #     'user_name': user_data_response['display_name'],
-    #     'id': user_data_response['id'],
-    # }
+
+    context = {
+        'user_name': user_data_response['display_name'],
+        'id': user_data_response['id'],
+    }
 
     library_stats = {
         "audio_features":{}, 
