@@ -20,11 +20,11 @@ class User(models.Model):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
-    user_id = models.CharField(primary_key=True, max_length=30) # the user's Spotify ID
-    user_name = models.CharField(max_length=30, blank=True) # User's Spotify user name, if set
+    user_id = models.CharField(primary_key=True, max_length=30)  # the user's Spotify ID
+    user_name = models.CharField(max_length=30, blank=True)  # User's Spotify user name, if set
 
     def __str__(self):
-        return self.username
+        return self.user_name
 
 
 class Track(models.Model):
@@ -32,10 +32,9 @@ class Track(models.Model):
     class Meta:
         verbose_name = "Track"
         verbose_name_plural = "Tracks"
-        unique_together = ('track_id', 'artist',)
 
     track_id = models.CharField(max_length=30)
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
+    artists = models.ManyToManyField(Artist)
     year = models.PositiveSmallIntegerField()
     popularity = models.DecimalField(decimal_places=2, max_digits=2)
     runtime = models.PositiveSmallIntegerField()

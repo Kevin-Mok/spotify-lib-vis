@@ -16,6 +16,7 @@ TRACKS_TO_QUERY = 5
 
 #  generate_random_string {{{ # 
 
+
 def generate_random_string(length):
     """Generates a random string of a certain length
 
@@ -145,7 +146,8 @@ def user_data(request):
         user = User.objects.get(user_id=request.session['user_id'])
     except User.DoesNotExist:
         user = User.objects.create(user_id=request.session['user_id'], user_name=request.session['user_name'])
-
+    user.save()
+    
     context = {
         'user_name': user_data_response['display_name'],
         'id': user_data_response['id'],
