@@ -1,15 +1,17 @@
 import requests
 import math
 import pprint
+from .models import Artist, User, Track, AudioFeatures
 
 #  parse_library {{{ # 
 
-def parse_library(headers, tracks, library_stats):
+def parse_library(headers, tracks, library_stats, user):
     """Scans user's library for certain number of tracks to update library_stats with.
 
     :headers: For API call.
     :tracks: Number of tracks to get from user's library.
     :library_stats: Dictionary containing the data mined from user's library 
+    :user: a User object representing the user whose library we are parsing
 
     :returns: None
 
@@ -20,19 +22,25 @@ def parse_library(headers, tracks, library_stats):
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
+    # use two separate variables to track, because the average popularity also requires num_samples 
+    num_samples = 0  # number of actual track samples
+    feature_data_points = 0  # number of feature data analyses (some tracks do not have analyses available)
+
     for _ in range(0, tracks, limit):
         payload['offset'] = str(offset)
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
-        num_samples = offset
         for track_dict in saved_tracks_response['items']:
-            # Track the number of samples for calculating
-            # audio feature averages and standard deviations on the fly
             num_samples += 1 
             get_track_info(track_dict['track'], library_stats, num_samples)
             #  get_genre(headers, track_dict['track']['album']['id'])
             audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
-            for feature, feature_data in audio_features_dict.items():
-                update_audio_feature_stats(feature, feature_data, num_samples, library_stats)
+            if len(audio_features_dict) != 0:
+                # Track the number of audio analyses for calculating
+                # audio feature averages and standard deviations on the fly
+                feature_data_points += 1
+                
+                for feature, feature_data in audio_features_dict.items():
+                    update_audio_feature_stats(feature, feature_data, feature_data_points, library_stats)
             for artist_dict in track_dict['track']['artists']:
                 increase_artist_count(headers, artist_dict['name'], artist_dict['id'], library_stats)
         # calculates num_songs with offset + songs retrieved
@@ -51,10 +59,13 @@ def get_audio_features(headers, track_id):
         track_id: the id of the soundtrack, needed to query the Spotify API
         
     Returns:
-        A dictionary with the features as its keys
+        A dictionary with the features as its keys, if audio feature data is missing for the track, 
+        an empty dictionary is returned.
     """
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
+    if 'error' in response:
+        return {}
     features_dict = {}
 
     # Data that we don't need

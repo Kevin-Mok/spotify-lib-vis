@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html>
   <head>
     <title>User Login</title>
@@ -11,14 +12,25 @@
         width: 500px;
       }
     </style>
+
   </head>
 
   <body>
     <div class="container">
       <div id="login">
         <h1>This is an example of the Authorization Code flow</h1>
-        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+        <a href="/login" class="btn btn-primary">Log In (Original)</a>
+        <button id="login-btn">Log In</button>
+      </div>
+
+      <div id="data-container">
+        <ul id="data-list">
+
+        </ul>
       </div>
     </div>
+
+
+    <script src="{% static 'spotifyvis/scripts/index.js' %}"></script>
   </body>
 </html>
