@@ -30,23 +30,38 @@ def parse_library(headers, tracks, library_stats, user):
     num_samples = 0  # number of actual track samples
     feature_data_points = 0  # number of feature data analyses (some tracks do not have analyses available)
 
+    # iterate until hit requested num of tracks
     for _ in range(0, tracks, limit):
         payload['offset'] = str(offset)
+        # get current set of tracks
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
+
+        # TODO: refactor the for loop body into helper function
+        # iterate through each track
         for track_dict in saved_tracks_response['items']:
             num_samples += 1 
+            # update artist info before track so that Track object can reference
+            # Artist object
+            track_artists = []
+            for artist_dict in track_dict['track']['artists']:
+                increase_artist_count(headers, artist_dict['name'], 
+                        artist_dict['id'], library_stats)
+                track_artists.append(Artist.objects.get_or_create(
+                    artist_id=artist_dict['id'],
+                    name=artist_dict['name'],
+                    )[0])
+            
+            save_track_obj(track_dict['track'], track_artists, user)
             get_track_info(track_dict['track'], library_stats, num_samples)
-            #  get_genre(headers, track_dict['track']['album']['id'])
             audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
             if len(audio_features_dict) != 0:
                 # Track the number of audio analyses for calculating
                 # audio feature averages and standard deviations on the fly
                 feature_data_points += 1
-                
                 for feature, feature_data in audio_features_dict.items():
-                    update_audio_feature_stats(feature, feature_data, feature_data_points, library_stats)
-            for artist_dict in track_dict['track']['artists']:
-                increase_artist_count(headers, artist_dict['name'], artist_dict['id'], library_stats)
+                    update_audio_feature_stats(feature, feature_data, 
+                            feature_data_points, library_stats)
+
         # calculates num_songs with offset + songs retrieved
         library_stats['num_songs'] = offset + len(saved_tracks_response['items'])
         offset += limit
@@ -54,6 +69,32 @@ def parse_library(headers, tracks, library_stats, user):
     #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
+
+def save_track_obj(track_dict, artists, user):
+    """Make an entry in the database for this track if it doesn't exist already.
+
+    :track_dict: TODO
+    :artists: artists of the song, passed in as a list of Artist objects.
+    :user: TODO
+    :returns: None
+
+    """
+    if len(Track.objects.filter(track_id__exact=track_dict['id'])) == 0:
+        new_track = Track.objects.create(
+            track_id=track_dict['id'],
+            year=track_dict['album']['release_date'].split('-')[0],
+            popularity=int(track_dict['popularity']),
+            runtime=int(float(track_dict['duration_ms']) / 1000),
+            name=track_dict['name'],
+        )
+        #  print("pop/run: ", new_track.popularity, new_track.runtime)
+
+        # have to add artists and user after saving object since track needs to
+        # have ID before filling in m2m field
+        for artist in artists:
+            new_track.artists.add(artist)
+        new_track.users.add(user)
+        new_track.save()
 
 #  get_audio_features {{{ # 
 
@@ -184,14 +225,6 @@ def increase_artist_count(headers, artist_name, artist_id, library_stats):
         library_stats['artists'][artist_name]['id'] = artist_id
     else:
         library_stats['artists'][artist_name]['count'] += 1
-
-    # add artist to database if new
-    if len(Artist.objects.filter(artist_id__contains=artist_id)) == 0:
-        new_artist = Artist(
-                artist_id=artist_id,
-                name=artist_name,
-                )
-        new_artist.save()
 
 #  }}} increase_artist_count # 
 
