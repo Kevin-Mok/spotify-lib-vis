@@ -51,9 +51,10 @@ def parse_library(headers, tracks, library_stats, user):
                     name=artist_dict['name'],
                     )[0])
             
-            save_track_obj(track_dict['track'], track_artists, user)
+            track_obj = save_track_obj(track_dict['track'], track_artists, user)
             get_track_info(track_dict['track'], library_stats, num_samples)
-            audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
+            audio_features_dict = get_audio_features(headers,
+                    track_dict['track']['id'], track_obj)
             if len(audio_features_dict) != 0:
                 # Track the number of audio analyses for calculating
                 # audio feature averages and standard deviations on the fly
@@ -70,16 +71,19 @@ def parse_library(headers, tracks, library_stats, user):
 
 #  }}} parse_library # 
 
+#  save_track_obj {{{ # 
+
 def save_track_obj(track_dict, artists, user):
     """Make an entry in the database for this track if it doesn't exist already.
 
-    :track_dict: TODO
+    :track_dict: dictionary from the API call containing track information.
     :artists: artists of the song, passed in as a list of Artist objects.
-    :user: TODO
-    :returns: None
+    :user: User object for which this Track is to be associated with.
+    :returns: The created/retrieved Track object.
 
     """
-    if len(Track.objects.filter(track_id__exact=track_dict['id'])) == 0:
+    track_obj_query = Track.objects.filter(track_id__exact=track_dict['id'])
+    if len(track_obj_query) == 0:
         new_track = Track.objects.create(
             track_id=track_dict['id'],
             year=track_dict['album']['release_date'].split('-')[0],
@@ -95,15 +99,21 @@ def save_track_obj(track_dict, artists, user):
             new_track.artists.add(artist)
         new_track.users.add(user)
         new_track.save()
+        return new_track
+    elif len(track_obj_query) == 1:
+        return track_obj_query[0]
+
+#  }}} save_track_obj # 
 
 #  get_audio_features {{{ # 
 
-def get_audio_features(headers, track_id):
+def get_audio_features(headers, track_id, track):
     """Returns the audio features of a soundtrack
 
     Args:
         headers: headers containing the API token
         track_id: the id of the soundtrack, needed to query the Spotify API
+        track: Track object to associate with the AudioFeatures object
         
     Returns:
         A dictionary with the features as its keys, if audio feature data is missing for the track, 
@@ -119,9 +129,13 @@ def get_audio_features(headers, track_id):
     useless_keys = [ 
         "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature",
     ]
+    audio_features_entry = AudioFeatures()
+    audio_features_entry.track = track
     for key, val in response.items():
         if key not in useless_keys:
             features_dict[key] = val
+            setattr(audio_features_entry, key, val)
+    audio_features_entry.save()
 
     return features_dict
 

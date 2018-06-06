@@ -67,14 +67,14 @@ class AudioFeatures(models.Model):
         verbose_name_plural = "AudioFeatures"
 
     track = models.OneToOneField(Track, on_delete=models.CASCADE, primary_key=True,)
-    danceability = models.DecimalField(decimal_places=2, max_digits=2)
-    energy = models.DecimalField(decimal_places=2, max_digits=2)
-    loudness = models.DecimalField(decimal_places=2, max_digits=2)
-    speechiness = models.DecimalField(decimal_places=2, max_digits=2)
-    acousticness = models.DecimalField(decimal_places=2, max_digits=2)
-    instrumentalness = models.DecimalField(decimal_places=2, max_digits=2)
-    valence = models.DecimalField(decimal_places=2, max_digits=2)
-    tempo = models.DecimalField(decimal_places=2, max_digits=2)
+    acousticness = models.DecimalField(decimal_places=3, max_digits=3)
+    danceability = models.DecimalField(decimal_places=3, max_digits=3)
+    energy = models.DecimalField(decimal_places=3, max_digits=3)
+    instrumentalness = models.DecimalField(decimal_places=3, max_digits=3)
+    loudness = models.DecimalField(decimal_places=3, max_digits=6)
+    speechiness = models.DecimalField(decimal_places=3, max_digits=3)
+    tempo = models.DecimalField(decimal_places=3, max_digits=6)
+    valence = models.DecimalField(decimal_places=3, max_digits=3)
 
     def __str__(self):
         return super(AudioFeatures, self).__str__()
