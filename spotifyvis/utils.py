@@ -1,7 +1,11 @@
+#  imports {{{ # 
+
 import requests
 import math
 import pprint
 from .models import Artist, User, Track, AudioFeatures
+
+#  }}} imports # 
 
 #  parse_library {{{ # 
 
@@ -26,37 +30,90 @@ def parse_library(headers, tracks, library_stats, user):
     num_samples = 0  # number of actual track samples
     feature_data_points = 0  # number of feature data analyses (some tracks do not have analyses available)
 
+    # iterate until hit requested num of tracks
     for _ in range(0, tracks, limit):
         payload['offset'] = str(offset)
+        # get current set of tracks
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
+
+        # TODO: refactor the for loop body into helper function
+        # iterate through each track
         for track_dict in saved_tracks_response['items']:
             num_samples += 1 
+            # update artist info before track so that Track object can reference
+            # Artist object
+            track_artists = []
+            for artist_dict in track_dict['track']['artists']:
+                increase_artist_count(headers, artist_dict['name'], 
+                        artist_dict['id'], library_stats)
+                track_artists.append(Artist.objects.get_or_create(
+                    artist_id=artist_dict['id'],
+                    name=artist_dict['name'],
+                    )[0])
+            
+            track_obj = save_track_obj(track_dict['track'], track_artists, user)
             get_track_info(track_dict['track'], library_stats, num_samples)
-            #  get_genre(headers, track_dict['track']['album']['id'])
-            audio_features_dict = get_audio_features(headers, track_dict['track']['id'])
+            audio_features_dict = get_audio_features(headers,
+                    track_dict['track']['id'], track_obj)
             if len(audio_features_dict) != 0:
                 # Track the number of audio analyses for calculating
                 # audio feature averages and standard deviations on the fly
                 feature_data_points += 1
-                
                 for feature, feature_data in audio_features_dict.items():
-                    update_audio_feature_stats(feature, feature_data, feature_data_points, library_stats)
-            for artist_dict in track_dict['track']['artists']:
-                increase_artist_count(headers, artist_dict['name'], artist_dict['id'], library_stats)
+                    update_audio_feature_stats(feature, feature_data, 
+                            feature_data_points, library_stats)
+
         # calculates num_songs with offset + songs retrieved
         library_stats['num_songs'] = offset + len(saved_tracks_response['items'])
         offset += limit
     calculate_genres_from_artists(headers, library_stats)
-    pprint.pprint(library_stats)
+    #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
 
-def get_audio_features(headers, track_id):
+#  save_track_obj {{{ # 
+
+def save_track_obj(track_dict, artists, user):
+    """Make an entry in the database for this track if it doesn't exist already.
+
+    :track_dict: dictionary from the API call containing track information.
+    :artists: artists of the song, passed in as a list of Artist objects.
+    :user: User object for which this Track is to be associated with.
+    :returns: The created/retrieved Track object.
+
+    """
+    track_obj_query = Track.objects.filter(track_id__exact=track_dict['id'])
+    if len(track_obj_query) == 0:
+        new_track = Track.objects.create(
+            track_id=track_dict['id'],
+            year=track_dict['album']['release_date'].split('-')[0],
+            popularity=int(track_dict['popularity']),
+            runtime=int(float(track_dict['duration_ms']) / 1000),
+            name=track_dict['name'],
+        )
+        #  print("pop/run: ", new_track.popularity, new_track.runtime)
+
+        # have to add artists and user after saving object since track needs to
+        # have ID before filling in m2m field
+        for artist in artists:
+            new_track.artists.add(artist)
+        new_track.users.add(user)
+        new_track.save()
+        return new_track
+    elif len(track_obj_query) == 1:
+        return track_obj_query[0]
+
+#  }}} save_track_obj # 
+
+#  get_audio_features {{{ # 
+
+def get_audio_features(headers, track_id, track):
     """Returns the audio features of a soundtrack
 
     Args:
         headers: headers containing the API token
         track_id: the id of the soundtrack, needed to query the Spotify API
+        track: Track object to associate with the AudioFeatures object
         
     Returns:
         A dictionary with the features as its keys, if audio feature data is missing for the track, 
@@ -72,12 +129,19 @@ def get_audio_features(headers, track_id):
     useless_keys = [ 
         "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature",
     ]
+    audio_features_entry = AudioFeatures()
+    audio_features_entry.track = track
     for key, val in response.items():
         if key not in useless_keys:
             features_dict[key] = val
+            setattr(audio_features_entry, key, val)
+    audio_features_entry.save()
 
     return features_dict
 
+#  }}} get_audio_features # 
+
+#  update_std_dev {{{ # 
 
 def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     """Calculates the standard deviation for a sample without storing all data points
@@ -101,6 +165,9 @@ def update_std_dev(cur_mean, cur_std_dev, new_data_point, sample_size):
     ))
     return new_mean, new_std_dev
 
+#  }}} update_std_dev # 
+
+#  update_audio_feature_stats {{{ # 
 
 def update_audio_feature_stats(feature, new_data_point, sample_size, library_stats):
     """Updates the audio feature statistics in library_stats
@@ -131,6 +198,7 @@ def update_audio_feature_stats(feature, new_data_point, sample_size, library_sta
             "std_dev": new_std_dev
         }
 
+#  }}} update_audio_feature_stats # 
 
 #  increase_nested_key {{{ # 
 
@@ -174,6 +242,8 @@ def increase_artist_count(headers, artist_name, artist_id, library_stats):
 
 #  }}} increase_artist_count # 
 
+#  update_popularity_stats {{{ # 
+
 def update_popularity_stats(new_data_point, library_stats, sample_size):
     """Updates the popularity statistics in library_stats
 
@@ -200,6 +270,8 @@ def update_popularity_stats(new_data_point, library_stats, sample_size):
             "std_dev": new_std_dev,
         }
 
+#  }}}  update_popularity_stats # 
+
 #  get_track_info {{{ # 
 
 def get_track_info(track_dict, library_stats, sample_size):
@@ -219,11 +291,6 @@ def get_track_info(track_dict, library_stats, sample_size):
     year_released = track_dict['album']['release_date'].split('-')[0]
     increase_nested_key('year_released', year_released, library_stats)
     
-    # artist
-    #  artist_names = [artist['name'] for artist in track_dict['artists']]
-    #  for artist_name in artist_names:
-        #  increase_nested_key('artists', artist_name)
-
     # runtime
     library_stats['total_runtime'] += float(track_dict['duration_ms']) / (1000 * 60)
 
@@ -246,7 +313,12 @@ def calculate_genres_from_artists(headers, library_stats):
         for genre in artist_response['genres']:
             increase_nested_key('genres', genre, library_stats, artist_entry['count'])
 
+        # update genre for artist in database with top genre
+        Artist.objects.filter(artist_id=artist_entry['id']).update(genre=artist_response['genres'][0])
+
 #  }}} calculate_genres_from_artists # 
+
+#  process_library_stats {{{ # 
 
 def process_library_stats(library_stats):
     """Processes library_stats into format more suitable for D3 consumption
@@ -298,3 +370,5 @@ def process_library_stats(library_stats):
             processed_library_stats[key] = library_stats[key]
     
     return processed_library_stats
+
+#  }}} process_library_stats # 

@@ -1,3 +1,5 @@
+#  imports {{{ # 
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
 import math
@@ -10,6 +12,8 @@ import pprint
 from datetime import datetime
 from .utils import parse_library, process_library_stats
 from .models import User, Track, AudioFeatures, Artist 
+
+#  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 5
@@ -135,20 +139,12 @@ def user_data(request):
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
     request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
-    display_name = user_data_response['display_name']
-    if display_name is not None:
-        request.session['user_name'] = display_name
-    else:
-        request.session['user_name'] = ""
-    user = None # will be set to the current user object later
-    try:
-        user = User.objects.get(user_id=request.session['user_id'])
-    except User.DoesNotExist:
-        user = User.objects.create(user_id=request.session['user_id'], user_name=request.session['user_name'])
+    #  request.session['user_name'] = user_data_response['display_name']
+    user = User.objects.get_or_create(user_id=user_data_response['id'])[0]
 
     context = {
-        'user_name': user_data_response['display_name'],
-        'id': user_data_response['id'],
+       'user_name': user_data_response['display_name'],
+       'id': user_data_response['id'],
     }
 
     library_stats = {
@@ -165,9 +161,9 @@ def user_data(request):
     }
     parse_library(headers, TRACKS_TO_QUERY, library_stats, user)
     processed_library_stats = process_library_stats(library_stats)
-    print("================================================")
-    print("Processed data follows\n")
-    pprint.pprint(processed_library_stats)
+    #  print("================================================")
+    #  print("Processed data follows\n")
+    #  pprint.pprint(processed_library_stats)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
