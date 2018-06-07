@@ -42,7 +42,6 @@ class Track(models.Model):
     class Meta:
         verbose_name = "Track"
         verbose_name_plural = "Tracks"
-        #  unique_together = ('track_id', 'artist',)
 
     track_id = models.CharField(primary_key=True, max_length=id_length)
     #  artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
