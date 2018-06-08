@@ -1,7 +1,5 @@
 #  imports {{{ # 
 
-from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseBadRequest
 import math
 import random
 import requests
@@ -10,7 +8,11 @@ import urllib
 import json
 import pprint
 from datetime import datetime
-from .utils import parse_library, process_library_stats
+
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.db.models import Count
+from .utils import parse_library, process_library_stats, get_artist_data
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
@@ -168,3 +170,12 @@ def user_data(request):
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
+
+def test_db(request):
+    user_id = "polarbier"
+    context = {
+        'artist_data': get_artist_data(user_id),
+        'user_id': user_id,
+    }
+    #  get_artist_data(user)
+    return render(request, 'spotifyvis/test_db.html', context)
