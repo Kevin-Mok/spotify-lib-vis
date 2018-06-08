@@ -3,7 +3,11 @@
 import requests
 import math
 import pprint
+
 from .models import Artist, User, Track, AudioFeatures
+from django.db.models import Count
+from django.http import JsonResponse
+from django.core import serializers
 
 #  }}} imports # 
 
@@ -372,3 +376,35 @@ def process_library_stats(library_stats):
     return processed_library_stats
 
 #  }}} process_library_stats # 
+
+def get_genre_data(user):
+    """Return genre data needed to create the graph user.
+
+    :user: User object for which to return the data for.
+    :returns: List of dicts containing counts for each genre.
+
+    """
+    pass
+    #  user_tracks = Track.objects.filter(users__exact=user)
+    #  for track in user_tracks:
+        #  print(track.name)
+
+
+def get_artist_data(user_id):
+    """Return artist data needed to create the graph for user.
+
+    :user_id: user ID for which to return the data for.
+    :returns: List of dicts containing counts for each artist.
+
+    """
+    # TODO: not actual artists for user
+    # PICK UP: figure out how to pass data to D3/frontend
+    print(user_id)
+    #  user = User.objects.get(user_id=user_id)
+    artist_counts = Artist.objects.annotate(num_songs=Count('track'))
+    processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
+    #  for artist in artist_counts:
+        #  print(artist.name, artist.num_songs)
+    return JsonResponse(processed_artist_data, safe=False)
+    #  return serializers.serialize('json', processed_artist_data)
+    #  return processed_artist_data

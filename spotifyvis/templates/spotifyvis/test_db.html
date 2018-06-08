@@ -6,7 +6,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>User Spotify Data</title>
+        <title>Test DB Page</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
@@ -14,12 +14,14 @@
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ id }}</p>
-        <h2>Display name {{ user_name }}</h2>
-				<ul>
-					{% for genre_name, genre_count in genre_dict.items %}
-						<li>{{ genre_name }} - {{ genre_count }}</li>
-					{% endfor %}
+        <ul>
+          {% for artist in artist_data %}
+              <li>{{ artist.name }} - {{ artist.num_songs }}</li>
+          {% endfor %}
         </ul>
+        <pre> {% filter force_escape %} {% debug %} {% endfilter %} </pre>
+      <script src="http://d3js.org/d3.v3.js"></script>
+      {% load static %}
+      <script src="{% static "spotifyvis/scripts/test_db.js" %}"></script>
     </body>
 </html>
