@@ -310,7 +310,8 @@ def update_artist_genre(headers, artist_obj):
     """
     artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_obj.id, headers=headers).json()
     # update genre for artist in database with top genre
-    artist_obj.update(genre=artist_response['genres'][0])
+    artist_obj.genre = artist_response['genres'][0]
+    artist_obj.save()
 
 #  }}} calculate_genres_from_artists # 
 
