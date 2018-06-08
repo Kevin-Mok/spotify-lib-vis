@@ -61,7 +61,7 @@ def parse_library(headers, tracks, library_stats, user):
             if track_created:
                 save_audio_features(headers, track_dict['track']['id'], track_obj)
             """
-            TODO: Put this login in another function
+            TODO: Put this logic in another function
             # Audio analysis could be empty if not present in Spotify database
             if len(audio_features_dict) != 0:
                 # Track the number of audio analyses for calculating

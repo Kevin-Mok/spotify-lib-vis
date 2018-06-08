@@ -4,6 +4,7 @@ from django.db import models
 MAX_ID = 30
 #  Artist {{{ # 
 
+
 class Artist(models.Model):
     class Meta:
         verbose_name = "Artist"
@@ -58,6 +59,7 @@ class Track(models.Model):
 
 #  AudioFeatures {{{ # 
 
+
 class AudioFeatures(models.Model):
         
     class Meta:
@@ -77,40 +79,4 @@ class AudioFeatures(models.Model):
     def __str__(self):
         return super(AudioFeatures, self).__str__()
 
-#  }}} AudioFeatures # 
-
-
-'''
-class UserAudioSummary(models.Model):
-    """
-    Stores the summary of a user's audio preferences
-    """ 
-    class Meta:
-        verbose_name = "AudioFeatures"
-        verbose_name_plural = "AudioFeatures"
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True,)
-    avg_acousticness = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_acousticness = models.DecimalField(decimal_places=3, max_digits=3)
-
-    avg_danceability = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_danceability = models.DecimalField(decimal_places=3, max_digits=3)
-
-    avg_energy = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_energy = models.DecimalField(decimal_places=3, max_digits=3)
-
-    avg_instrumentalness = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_instrumentalness = models.DecimalField(decimal_places=3, max_digits=3)
-
-    avg_loudness = models.DecimalField(decimal_places=3, max_digits=6)
-    stdev_loudness = models.DecimalField(decimal_places=3, max_digits=6)
-
-    avg_speechiness = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_speechiness = models.DecimalField(decimal_places=3, max_digits=3)
-
-    avg_tempo = models.DecimalField(decimal_places=3, max_digits=6)
-    stdev_tempo = models.DecimalField(decimal_places=3, max_digits=6)
-
-    avg_valence = models.DecimalField(decimal_places=3, max_digits=3)
-    stdev_valence = models.DecimalField(decimal_places=3, max_digits=3)
-'''
+#  }}} AudioFeatures #
