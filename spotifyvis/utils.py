@@ -80,7 +80,6 @@ def parse_library(headers, tracks, library_stats, user):
 
 #  save_track_obj {{{ # 
 
-
 def save_track_obj(track_dict, artists, user):
     """Make an entry in the database for this track if it doesn't exist already.
 
@@ -91,22 +90,25 @@ def save_track_obj(track_dict, artists, user):
 
     """
     print(track_dict['name'])
-    new_track, created = Track.objects.get_or_create(
-        track_id=track_dict['id'],
-        year=track_dict['album']['release_date'].split('-')[0],
-        popularity=int(track_dict['popularity']),
-        runtime=int(float(track_dict['duration_ms']) / 1000),
-        name=track_dict['name'],
-    )
+    track_query = Track.objects.filter(track_id__exact=track_dict['id'])
+    if len(track_query) != 0:
+        return track_query[0], False
+    else:
+        new_track = Track.objects.create(
+            track_id=track_dict['id'],
+            year=track_dict['album']['release_date'].split('-')[0],
+            popularity=int(track_dict['popularity']),
+            runtime=int(float(track_dict['duration_ms']) / 1000),
+            name=track_dict['name'],
+            )
 
-    # have to add artists and user after saving object since track needs to
-    # have ID before filling in m2m field
-    if created:
+        # have to add artists and user after saving object since track needs to
+        # have ID before filling in m2m field
         for artist in artists:
             new_track.artists.add(artist)
         new_track.users.add(user)
         new_track.save()
-    return new_track, created
+        return new_track, True
 
 #  }}} save_track_obj # 
 

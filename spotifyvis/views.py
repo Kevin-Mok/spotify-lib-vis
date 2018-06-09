@@ -175,6 +175,8 @@ def user_data(request):
 #  }}} user_data  # 
 
 def test_db(request):
+    """TODO
+    """
     user_id = "polarbier"
     context = {
         'user_id': user_id,
@@ -184,13 +186,11 @@ def test_db(request):
 
 
 def get_artist_data(request, user_id):
-
+    """TODO
+    """
     # TODO: not actual artists for user
-    # PICK UP: figure out how to pass data to D3/frontend
     print(user_id)
     #  user = User.objects.get(user_id=user_id)
     artist_counts = Artist.objects.annotate(num_songs=Count('track'))
     processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
-    #  for artist in artist_counts:
-        #  print(artist.name, artist.num_songs)
     return JsonResponse(data=processed_artist_data, safe=False) 

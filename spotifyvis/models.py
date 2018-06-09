@@ -2,6 +2,7 @@ from django.db import models
 
 # id's are 22 in length in examples but set to 30 for buffer
 MAX_ID = 30
+
 #  Artist {{{ # 
 
 
