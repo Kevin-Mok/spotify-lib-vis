@@ -90,6 +90,7 @@ def save_track_obj(track_dict, artists, user):
     :returns: (The created/retrieved Track object, created) 
 
     """
+    print(track_dict['name'])
     new_track, created = Track.objects.get_or_create(
         track_id=track_dict['id'],
         year=track_dict['album']['release_date'].split('-')[0],
@@ -308,7 +309,7 @@ def update_artist_genre(headers, artist_obj):
     :returns: None
 
     """
-    artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_obj.id, headers=headers).json()
+    artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_obj.artist_id, headers=headers).json()
     # update genre for artist in database with top genre
     artist_obj.genre = artist_response['genres'][0]
     artist_obj.save()

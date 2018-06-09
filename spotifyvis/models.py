@@ -13,7 +13,7 @@ class Artist(models.Model):
     artist_id = models.CharField(primary_key=True, max_length=MAX_ID)
     # unique since only storing one genre per artist right now
     name = models.CharField(unique=True, max_length=50)
-    genre = models.CharField(max_length=20)
+    genre = models.CharField(max_length=30)
 
     def __str__(self):
         return self.name
@@ -49,7 +49,7 @@ class Track(models.Model):
     year = models.PositiveSmallIntegerField()
     popularity = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField()
-    name = models.CharField(max_length=75)
+    name = models.CharField(max_length=150)
     users = models.ManyToManyField(User, blank=True)
 
     def __str__(self):
