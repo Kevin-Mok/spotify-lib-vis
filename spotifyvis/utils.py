@@ -13,12 +13,12 @@ import json
 
 #  parse_library {{{ # 
 
-def parse_library(headers, tracks, library_stats, user):
+
+def parse_library(headers, tracks, user):
     """Scans user's library for certain number of tracks to update library_stats with.
 
     :headers: For API call.
     :tracks: Number of tracks to get from user's library.
-    :library_stats: Dictionary containing the data mined from user's library 
     :user: a User object representing the user whose library we are parsing
 
     :returns: None
@@ -30,8 +30,6 @@ def parse_library(headers, tracks, library_stats, user):
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
-    # use two separate variables to track, because the average popularity also requires num_samples 
-    num_samples = 0  # number of actual track samples
 
     # iterate until hit requested num of tracks
     for _ in range(0, tracks, limit):
@@ -73,7 +71,6 @@ def parse_library(headers, tracks, library_stats, user):
             """
         # calculates num_songs with offset + songs retrieved
         offset += limit
-    # calculate_genres_from_artists(headers, library_stats)
     #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
@@ -125,7 +122,6 @@ def save_audio_features(headers, track_id, track):
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
     if 'error' in response:
         return {}
-    features_dict = {}
 
     # Data that we don't need
     useless_keys = [ 
@@ -135,7 +131,6 @@ def save_audio_features(headers, track_id, track):
     audio_features_entry.track = track
     for key, val in response.items():
         if key not in useless_keys:
-            features_dict[key] = val
             setattr(audio_features_entry, key, val)
     audio_features_entry.save()
 

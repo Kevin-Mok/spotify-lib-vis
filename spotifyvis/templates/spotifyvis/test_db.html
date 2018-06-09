@@ -11,15 +11,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
-        <ul>
-          {% for artist in artist_data %}
-              <li>{{ artist.name }} - {{ artist.num_songs }}</li>
-          {% endfor %}
-        </ul>
-        <pre> {% filter force_escape %} {% debug %} {% endfilter %} </pre>
       <script src="https://d3js.org/d3.v5.min.js"></script>
       <script>
         d3.json("{% url "get_artist_data" user_id %}").then(function(data) {

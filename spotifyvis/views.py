@@ -153,26 +153,11 @@ def user_data(request):
        'id': user_data_response['id'],
     }
 
-    library_stats = {
-        "audio_features":{}, 
-        "genres":{}, 
-        "year_released":{}, 
-        "artists":{}, 
-        "num_songs": 0, 
-        "popularity": {
-            "average": 0,
-            "std_dev": 0,
-        },   
-        "total_runtime": 0
-    }
-    parse_library(headers, TRACKS_TO_QUERY, library_stats, user)
-    processed_library_stats = process_library_stats(library_stats)
-    #  print("================================================")
-    #  print("Processed data follows\n")
-    #  pprint.pprint(processed_library_stats)
+    parse_library(headers, TRACKS_TO_QUERY, user)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
+
 
 def test_db(request):
     user_id = "polarbier"
@@ -191,6 +176,5 @@ def get_artist_data(request, user_id):
     #  user = User.objects.get(user_id=user_id)
     artist_counts = Artist.objects.annotate(num_songs=Count('track'))
     processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
-    #  for artist in artist_counts:
-        #  print(artist.name, artist.num_songs)
+
     return JsonResponse(data=processed_artist_data, safe=False) 
