@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -7,7 +6,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>User Spotify Data</title>
+        <title>Test DB Page</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
@@ -15,12 +14,19 @@
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ id }}</p>
-        <h2>Display name {{ user_name }}</h2>
-				<ul>
-					{% for genre_name, genre_count in genre_dict.items %}
-						<li>{{ genre_name }} - {{ genre_count }}</li>
-					{% endfor %}
+        <ul>
+          {% for artist in artist_data %}
+              <li>{{ artist.name }} - {{ artist.num_songs }}</li>
+          {% endfor %}
         </ul>
+        <pre> {% filter force_escape %} {% debug %} {% endfilter %} </pre>
+      <script src="https://d3js.org/d3.v5.min.js"></script>
+      <script>
+        d3.json("{% url "get_artist_data" user_id %}").then(function(data) {
+            data.forEach(function(d) {
+                console.log(d.name, d.num_songs);
+            });
+        });
+      </script>
     </body>
 </html>
