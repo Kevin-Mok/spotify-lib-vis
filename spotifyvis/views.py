@@ -10,9 +10,9 @@ import pprint
 from datetime import datetime
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.db.models import Count
-from .utils import parse_library, process_library_stats, get_artist_data
+from .utils import parse_library, process_library_stats 
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
@@ -21,6 +21,7 @@ TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 5
 
 #  generate_random_string {{{ # 
+
 
 def generate_random_string(length):
     """Generates a random string of a certain length
@@ -42,6 +43,7 @@ def generate_random_string(length):
 #  }}} generate_random_string # 
 
 #  token_expired {{{ # 
+
 
 def token_expired(token_obtained_at, valid_for):
     """Returns True if token expired, False if otherwise
@@ -142,6 +144,8 @@ def user_data(request):
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
     request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
     #  request.session['user_name'] = user_data_response['display_name']
+
+    # get_or_create() returns a tuple (obj, created)
     user = User.objects.get_or_create(user_id=user_data_response['id'])[0]
 
     context = {
@@ -173,8 +177,20 @@ def user_data(request):
 def test_db(request):
     user_id = "polarbier"
     context = {
-        'artist_data': get_artist_data(user_id),
         'user_id': user_id,
     }
     #  get_artist_data(user)
     return render(request, 'spotifyvis/test_db.html', context)
+
+
+def get_artist_data(request, user_id):
+
+    # TODO: not actual artists for user
+    # PICK UP: figure out how to pass data to D3/frontend
+    print(user_id)
+    #  user = User.objects.get(user_id=user_id)
+    artist_counts = Artist.objects.annotate(num_songs=Count('track'))
+    processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
+    #  for artist in artist_counts:
+        #  print(artist.name, artist.num_songs)
+    return JsonResponse(data=processed_artist_data, safe=False) 

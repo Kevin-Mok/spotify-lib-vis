@@ -1,5 +1,4 @@
 #  imports {{{ # 
-
 import requests
 import math
 import pprint
@@ -8,6 +7,7 @@ from .models import Artist, User, Track, AudioFeatures
 from django.db.models import Count
 from django.http import JsonResponse
 from django.core import serializers
+import json
 
 #  }}} imports # 
 
@@ -32,7 +32,6 @@ def parse_library(headers, tracks, library_stats, user):
     payload = {'limit': str(limit)}
     # use two separate variables to track, because the average popularity also requires num_samples 
     num_samples = 0  # number of actual track samples
-    feature_data_points = 0  # number of feature data analyses (some tracks do not have analyses available)
 
     # iterate until hit requested num of tracks
     for _ in range(0, tracks, limit):
@@ -43,22 +42,27 @@ def parse_library(headers, tracks, library_stats, user):
         # TODO: refactor the for loop body into helper function
         # iterate through each track
         for track_dict in saved_tracks_response['items']:
-            num_samples += 1 
             # update artist info before track so that Track object can reference
             # Artist object
             track_artists = []
             for artist_dict in track_dict['track']['artists']:
-                increase_artist_count(headers, artist_dict['name'], 
-                        artist_dict['id'], library_stats)
-                track_artists.append(Artist.objects.get_or_create(
+                artist_obj, artist_created = Artist.objects.get_or_create(
                     artist_id=artist_dict['id'],
                     name=artist_dict['name'],
-                    )[0])
+                    )
+
+                update_artist_genre(headers, artist_obj) 
+                # get_or_create() returns a tuple (obj, created)
+                track_artists.append(artist_obj)
             
-            track_obj = save_track_obj(track_dict['track'], track_artists, user)
-            get_track_info(track_dict['track'], library_stats, num_samples)
-            audio_features_dict = get_audio_features(headers,
-                    track_dict['track']['id'], track_obj)
+            track_obj, track_created = save_track_obj(track_dict['track'], track_artists, user)
+
+            # if a new track is not created, the associated audio feature does not need to be created again
+            if track_created:
+                save_audio_features(headers, track_dict['track']['id'], track_obj)
+            """
+            TODO: Put this logic in another function
+            # Audio analysis could be empty if not present in Spotify database
             if len(audio_features_dict) != 0:
                 # Track the number of audio analyses for calculating
                 # audio feature averages and standard deviations on the fly
@@ -66,16 +70,16 @@ def parse_library(headers, tracks, library_stats, user):
                 for feature, feature_data in audio_features_dict.items():
                     update_audio_feature_stats(feature, feature_data, 
                             feature_data_points, library_stats)
-
+            """
         # calculates num_songs with offset + songs retrieved
-        library_stats['num_songs'] = offset + len(saved_tracks_response['items'])
         offset += limit
-    calculate_genres_from_artists(headers, library_stats)
+    # calculate_genres_from_artists(headers, library_stats)
     #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
 
 #  save_track_obj {{{ # 
+
 
 def save_track_obj(track_dict, artists, user):
     """Make an entry in the database for this track if it doesn't exist already.
@@ -83,45 +87,39 @@ def save_track_obj(track_dict, artists, user):
     :track_dict: dictionary from the API call containing track information.
     :artists: artists of the song, passed in as a list of Artist objects.
     :user: User object for which this Track is to be associated with.
-    :returns: The created/retrieved Track object.
+    :returns: (The created/retrieved Track object, created) 
 
     """
-    track_obj_query = Track.objects.filter(track_id__exact=track_dict['id'])
-    if len(track_obj_query) == 0:
-        new_track = Track.objects.create(
-            track_id=track_dict['id'],
-            year=track_dict['album']['release_date'].split('-')[0],
-            popularity=int(track_dict['popularity']),
-            runtime=int(float(track_dict['duration_ms']) / 1000),
-            name=track_dict['name'],
-        )
-        #  print("pop/run: ", new_track.popularity, new_track.runtime)
+    print(track_dict['name'])
+    new_track, created = Track.objects.get_or_create(
+        track_id=track_dict['id'],
+        year=track_dict['album']['release_date'].split('-')[0],
+        popularity=int(track_dict['popularity']),
+        runtime=int(float(track_dict['duration_ms']) / 1000),
+        name=track_dict['name'],
+    )
 
-        # have to add artists and user after saving object since track needs to
-        # have ID before filling in m2m field
+    # have to add artists and user after saving object since track needs to
+    # have ID before filling in m2m field
+    if created:
         for artist in artists:
             new_track.artists.add(artist)
         new_track.users.add(user)
         new_track.save()
-        return new_track
-    elif len(track_obj_query) == 1:
-        return track_obj_query[0]
+    return new_track, created
 
 #  }}} save_track_obj # 
 
 #  get_audio_features {{{ # 
 
-def get_audio_features(headers, track_id, track):
-    """Returns the audio features of a soundtrack
+def save_audio_features(headers, track_id, track):
+    """Creates and saves a new AudioFeatures object
 
     Args:
         headers: headers containing the API token
         track_id: the id of the soundtrack, needed to query the Spotify API
-        track: Track object to associate with the AudioFeatures object
+        track: Track object to associate with the new AudioFeatures object
         
-    Returns:
-        A dictionary with the features as its keys, if audio feature data is missing for the track, 
-        an empty dictionary is returned.
     """
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
@@ -141,7 +139,6 @@ def get_audio_features(headers, track_id, track):
             setattr(audio_features_entry, key, val)
     audio_features_entry.save()
 
-    return features_dict
 
 #  }}} get_audio_features # 
 
@@ -300,29 +297,27 @@ def get_track_info(track_dict, library_stats, sample_size):
 
 #  }}} get_track_info # 
 
-#  calculate_genres_from_artists {{{ # 
+#  update_genres_from_artists {{{ # 
 
-def calculate_genres_from_artists(headers, library_stats):
-    """Tallies up genre counts based on artists in library_stats.
+
+def update_artist_genre(headers, artist_obj):
+    """Updates the top genre for an artist by querying the Spotify API
 
     :headers: For making the API call.
-    :library_stats: Dictionary containing the data mined from user's Spotify library
+    :artist_obj: the Artist object whose genre field will be updated 
 
     :returns: None
 
     """
-    for artist_entry in library_stats['artists'].values():
-        artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_entry['id'], headers=headers).json()
-        # increase each genre count by artist count
-        for genre in artist_response['genres']:
-            increase_nested_key('genres', genre, library_stats, artist_entry['count'])
-
-        # update genre for artist in database with top genre
-        Artist.objects.filter(artist_id=artist_entry['id']).update(genre=artist_response['genres'][0])
+    artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_obj.artist_id, headers=headers).json()
+    # update genre for artist in database with top genre
+    artist_obj.genre = artist_response['genres'][0]
+    artist_obj.save()
 
 #  }}} calculate_genres_from_artists # 
 
 #  process_library_stats {{{ # 
+
 
 def process_library_stats(library_stats):
     """Processes library_stats into format more suitable for D3 consumption
@@ -388,23 +383,3 @@ def get_genre_data(user):
     #  user_tracks = Track.objects.filter(users__exact=user)
     #  for track in user_tracks:
         #  print(track.name)
-
-
-def get_artist_data(user_id):
-    """Return artist data needed to create the graph for user.
-
-    :user_id: user ID for which to return the data for.
-    :returns: List of dicts containing counts for each artist.
-
-    """
-    # TODO: not actual artists for user
-    # PICK UP: figure out how to pass data to D3/frontend
-    print(user_id)
-    #  user = User.objects.get(user_id=user_id)
-    artist_counts = Artist.objects.annotate(num_songs=Count('track'))
-    processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
-    #  for artist in artist_counts:
-        #  print(artist.name, artist.num_songs)
-    return JsonResponse(processed_artist_data, safe=False)
-    #  return serializers.serialize('json', processed_artist_data)
-    #  return processed_artist_data

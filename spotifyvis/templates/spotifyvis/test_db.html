@@ -20,8 +20,13 @@
           {% endfor %}
         </ul>
         <pre> {% filter force_escape %} {% debug %} {% endfilter %} </pre>
-      <script src="http://d3js.org/d3.v3.js"></script>
-      {% load static %}
-      <script src="{% static "spotifyvis/scripts/test_db.js" %}"></script>
+      <script src="https://d3js.org/d3.v5.min.js"></script>
+      <script>
+        d3.json("{% url "get_artist_data" user_id %}").then(function(data) {
+            data.forEach(function(d) {
+                console.log(d.name, d.num_songs);
+            });
+        });
+      </script>
     </body>
 </html>
