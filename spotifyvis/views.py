@@ -105,7 +105,7 @@ def callback(request):
         'client_secret': os.environ['SPOTIFY_CLIENT_SECRET'],
     }
 
-    response = requests.post('https://accounts.spotify.com/api/token', data = payload).json()
+    response = requests.post('https://accounts.spotify.com/api/token', data=payload).json()
     # despite its name, datetime.today() returns a datetime object, not a date object
     # use datetime.strptime() to get a datetime object from a string
     request.session['token_obtained_at'] = datetime.strftime(datetime.today(), TIME_FORMAT) 
@@ -142,15 +142,18 @@ def user_data(request):
     }
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
-    request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
+    request.session['user_id'] = user_data_response['id']  # store the user_id so it may be used to create model
     #  request.session['user_name'] = user_data_response['display_name']
 
-    # get_or_create() returns a tuple (obj, created)
-    user = User.objects.get_or_create(user_id=user_data_response['id'])[0]
+    try:
+        user = User.objects.get(user_id=user_data_response['id'])
+    except User.DoesNotExist:
+        user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
+        user.save()
 
     context = {
-       'user_name': user_data_response['display_name'],
-       'id': user_data_response['id'],
+        'id': user_data_response['id'],
+        'user_secret': user.user_secret,
     }
 
     parse_library(headers, TRACKS_TO_QUERY, user)
@@ -177,4 +180,24 @@ def get_artist_data(request, user_id):
     artist_counts = Artist.objects.annotate(num_songs=Count('track'))
     processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
 
-    return JsonResponse(data=processed_artist_data, safe=False) 
+    return JsonResponse(data=processed_artist_data, safe=False)
+
+
+def get_audio_feature_data(request, audio_feature, client_secret):
+    """Returns all data points for a given audio feature
+
+    Args:
+        request: the HTTP request
+        audio_feature: The audio feature to be queried
+        client_secret: client secret, used to identify the user
+    """
+    user = User.objects.get(user_secret=client_secret)
+    user_tracks = Track.objects.filter(users=user)
+    response_payload = {
+        'data_points': [],
+    }
+    for track in user_tracks:
+        audio_feature_obj = AudioFeatures.objects.get(track=track)
+        response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+    return JsonResponse(response_payload)
+
