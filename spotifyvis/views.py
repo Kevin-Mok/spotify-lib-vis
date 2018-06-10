@@ -7,6 +7,7 @@ import os
 import urllib
 import json
 import pprint
+import string
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -32,11 +33,8 @@ def generate_random_string(length):
     Returns:
         A random string
     """
-    rand_str = ""
-    possible_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
-    for _ in range(length):
-        rand_str += possible_chars[random.randint(0, len(possible_chars) - 1)]
+    all_chars = string.ascii_letters + string.digits + string.punctuation
+    rand_str = "".join(random.choice(all_chars) for _ in range(length)) 
     
     return rand_str
 
