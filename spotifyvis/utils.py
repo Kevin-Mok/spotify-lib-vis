@@ -13,12 +13,12 @@ import json
 
 #  parse_library {{{ # 
 
-def parse_library(headers, tracks, library_stats, user):
+
+def parse_library(headers, tracks, user):
     """Scans user's library for certain number of tracks to update library_stats with.
 
     :headers: For API call.
     :tracks: Number of tracks to get from user's library.
-    :library_stats: Dictionary containing the data mined from user's library 
     :user: a User object representing the user whose library we are parsing
 
     :returns: None
@@ -30,8 +30,6 @@ def parse_library(headers, tracks, library_stats, user):
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
-    # use two separate variables to track, because the average popularity also requires num_samples 
-    num_samples = 0  # number of actual track samples
 
     # iterate until hit requested num of tracks
     for _ in range(0, tracks, limit):
@@ -51,11 +49,14 @@ def parse_library(headers, tracks, library_stats, user):
                     name=artist_dict['name'],
                     )
 
-                update_artist_genre(headers, artist_obj) 
+                #  update_artist_genre(headers, artist_obj)
                 # get_or_create() returns a tuple (obj, created)
                 track_artists.append(artist_obj)
             
-            track_obj, track_created = save_track_obj(track_dict['track'], track_artists, user)
+            top_genre = get_top_genre(headers,
+                    track_dict['track']['artists'][0]['id'])
+            track_obj, track_created = save_track_obj(track_dict['track'], 
+                    track_artists, top_genre, user)
 
             # if a new track is not created, the associated audio feature does not need to be created again
             if track_created:
@@ -73,23 +74,22 @@ def parse_library(headers, tracks, library_stats, user):
             """
         # calculates num_songs with offset + songs retrieved
         offset += limit
-    # calculate_genres_from_artists(headers, library_stats)
     #  pprint.pprint(library_stats)
 
 #  }}} parse_library # 
 
 #  save_track_obj {{{ # 
 
-def save_track_obj(track_dict, artists, user):
+def save_track_obj(track_dict, artists, top_genre, user):
     """Make an entry in the database for this track if it doesn't exist already.
 
     :track_dict: dictionary from the API call containing track information.
     :artists: artists of the song, passed in as a list of Artist objects.
+    :top_genre: top genre associated with this track (see get_top_genre).
     :user: User object for which this Track is to be associated with.
     :returns: (The created/retrieved Track object, created) 
 
     """
-    print(track_dict['name'])
     track_query = Track.objects.filter(track_id__exact=track_dict['id'])
     if len(track_query) != 0:
         return track_query[0], False
@@ -100,6 +100,7 @@ def save_track_obj(track_dict, artists, user):
             popularity=int(track_dict['popularity']),
             runtime=int(float(track_dict['duration_ms']) / 1000),
             name=track_dict['name'],
+            genre=top_genre,
             )
 
         # have to add artists and user after saving object since track needs to
@@ -127,7 +128,6 @@ def save_audio_features(headers, track_id, track):
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
     if 'error' in response:
         return {}
-    features_dict = {}
 
     # Data that we don't need
     useless_keys = [ 
@@ -137,7 +137,6 @@ def save_audio_features(headers, track_id, track):
     audio_features_entry.track = track
     for key, val in response.items():
         if key not in useless_keys:
-            features_dict[key] = val
             setattr(audio_features_entry, key, val)
     audio_features_entry.save()
 
@@ -299,8 +298,7 @@ def get_track_info(track_dict, library_stats, sample_size):
 
 #  }}} get_track_info # 
 
-#  update_genres_from_artists {{{ # 
-
+#  update_artist_genre {{{ # 
 
 def update_artist_genre(headers, artist_obj):
     """Updates the top genre for an artist by querying the Spotify API
@@ -313,10 +311,31 @@ def update_artist_genre(headers, artist_obj):
     """
     artist_response = requests.get('https://api.spotify.com/v1/artists/' + artist_obj.artist_id, headers=headers).json()
     # update genre for artist in database with top genre
-    artist_obj.genre = artist_response['genres'][0]
-    artist_obj.save()
+    if len(artist_response['genres']) > 0:
+        artist_obj.genre = artist_response['genres'][0]
+        artist_obj.save()
 
-#  }}} calculate_genres_from_artists # 
+#  }}} # 
+
+#  {{{ # 
+
+def get_top_genre(headers, top_artist_id):
+    """Updates the top genre for a track by querying the Spotify API
+
+    :headers: For making the API call.
+    :top_artist: The first artist's (listed in the track) Spotify ID.
+
+    :returns: The first genre listed for the top_artist.
+
+    """
+    artist_response = requests.get('https://api.spotify.com/v1/artists/' +
+            top_artist_id, headers=headers).json()
+    if len(artist_response['genres']) > 0:
+        return artist_response['genres'][0]
+    else:
+        return "undefined"
+
+#  }}} # 
 
 #  process_library_stats {{{ # 
 
@@ -374,14 +393,3 @@ def process_library_stats(library_stats):
 
 #  }}} process_library_stats # 
 
-def get_genre_data(user):
-    """Return genre data needed to create the graph user.
-
-    :user: User object for which to return the data for.
-    :returns: List of dicts containing counts for each genre.
-
-    """
-    pass
-    #  user_tracks = Track.objects.filter(users__exact=user)
-    #  for track in user_tracks:
-        #  print(track.name)

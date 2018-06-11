@@ -14,7 +14,6 @@ class Artist(models.Model):
     artist_id = models.CharField(primary_key=True, max_length=MAX_ID)
     # unique since only storing one genre per artist right now
     name = models.CharField(unique=True, max_length=50)
-    genre = models.CharField(max_length=30)
 
     def __str__(self):
         return self.name
@@ -29,7 +28,7 @@ class User(models.Model):
         verbose_name_plural = "Users"
 
     user_id = models.CharField(primary_key=True, max_length=MAX_ID) # the user's Spotify ID
-    #  username = models.CharField(max_length=30) # User's Spotify user name, if set
+    user_secret = models.CharField(max_length=30, default='')
 
     def __str__(self):
         return self.user_id
@@ -52,6 +51,7 @@ class Track(models.Model):
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=150)
     users = models.ManyToManyField(User, blank=True)
+    genre = models.CharField(max_length=30)
 
     def __str__(self):
         return self.name 

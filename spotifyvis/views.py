@@ -7,18 +7,19 @@ import os
 import urllib
 import json
 import pprint
+import string
 from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.db.models import Count
+from django.db.models import Count, Q
 from .utils import parse_library, process_library_stats 
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 5
+TRACKS_TO_QUERY = 15
 
 #  generate_random_string {{{ # 
 
@@ -32,11 +33,8 @@ def generate_random_string(length):
     Returns:
         A random string
     """
-    rand_str = ""
-    possible_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
-    for _ in range(length):
-        rand_str += possible_chars[random.randint(0, len(possible_chars) - 1)]
+    all_chars = string.ascii_letters + string.digits
+    rand_str = "".join(random.choice(all_chars) for _ in range(length)) 
     
     return rand_str
 
@@ -105,7 +103,7 @@ def callback(request):
         'client_secret': os.environ['SPOTIFY_CLIENT_SECRET'],
     }
 
-    response = requests.post('https://accounts.spotify.com/api/token', data = payload).json()
+    response = requests.post('https://accounts.spotify.com/api/token', data=payload).json()
     # despite its name, datetime.today() returns a datetime object, not a date object
     # use datetime.strptime() to get a datetime object from a string
     request.session['token_obtained_at'] = datetime.strftime(datetime.today(), TIME_FORMAT) 
@@ -142,55 +140,86 @@ def user_data(request):
     }
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
-    request.session['user_id'] = user_data_response['id'] # store the user_id so it may be used to create model
+    request.session['user_id'] = user_data_response['id']  # store the user_id so it may be used to create model
     #  request.session['user_name'] = user_data_response['display_name']
 
-    # get_or_create() returns a tuple (obj, created)
-    user = User.objects.get_or_create(user_id=user_data_response['id'])[0]
+    try:
+        user = User.objects.get(user_id=user_data_response['id'])
+    except User.DoesNotExist:
+        user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
+        user.save()
 
     context = {
-       'user_name': user_data_response['display_name'],
-       'id': user_data_response['id'],
+        'id': user_data_response['id'],
+        'user_secret': user.user_secret,
     }
 
-    library_stats = {
-        "audio_features":{}, 
-        "genres":{}, 
-        "year_released":{}, 
-        "artists":{}, 
-        "num_songs": 0, 
-        "popularity": {
-            "average": 0,
-            "std_dev": 0,
-        },   
-        "total_runtime": 0
-    }
-    parse_library(headers, TRACKS_TO_QUERY, library_stats, user)
-    processed_library_stats = process_library_stats(library_stats)
-    #  print("================================================")
-    #  print("Processed data follows\n")
-    #  pprint.pprint(processed_library_stats)
+    parse_library(headers, TRACKS_TO_QUERY, user)
     return render(request, 'spotifyvis/user_data.html', context)
 
 #  }}} user_data  # 
+
+#  test_db {{{ # 
 
 def test_db(request):
     """TODO
     """
     user_id = "polarbier"
     context = {
-        'user_id': user_id,
+        'user_secret': User.objects.get(user_id=user_id).user_secret,
     }
-    #  get_artist_data(user)
     return render(request, 'spotifyvis/test_db.html', context)
 
+#  }}} test_db # 
 
-def get_artist_data(request, user_id):
+#  get_artist_data {{{ # 
+
+def get_artist_data(request, user_secret):
     """TODO
     """
-    # TODO: not actual artists for user
-    print(user_id)
-    #  user = User.objects.get(user_id=user_id)
-    artist_counts = Artist.objects.annotate(num_songs=Count('track'))
+    user = User.objects.get(user_id=user_secret)
+    artist_counts = Artist.objects.annotate(num_songs=Count('track',
+        filter=Q(track__users=user)))
     processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
     return JsonResponse(data=processed_artist_data, safe=False) 
+
+#  }}} get_artist_data # 
+
+#  get_audio_feature_data {{{ # 
+
+def get_audio_feature_data(request, audio_feature, client_secret):
+    """Returns all data points for a given audio feature
+
+    Args:
+        request: the HTTP request
+        audio_feature: The audio feature to be queried
+        client_secret: client secret, used to identify the user
+    """
+    user = User.objects.get(user_secret=client_secret)
+    user_tracks = Track.objects.filter(users=user)
+    response_payload = {
+        'data_points': [],
+    }
+    for track in user_tracks:
+        audio_feature_obj = AudioFeatures.objects.get(track=track)
+        response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+    return JsonResponse(response_payload)
+
+#  }}} get_audio_feature_data # 
+
+#  get_genre_data {{{ # 
+
+def get_genre_data(request, user_secret):
+    """Return genre data needed to create the graph user.
+    TODO
+    """
+    user = User.objects.get(user_secret=user_secret)
+    genre_counts = (Track.objects.filter(users=user)
+            .values('genre')
+            .order_by('genre')
+            .annotate(num_songs=Count('genre'))
+            )
+    #  pprint.pprint(genre_counts)
+    return JsonResponse(data=list(genre_counts), safe=False) 
+
+#  }}} get_genre_data  # 
