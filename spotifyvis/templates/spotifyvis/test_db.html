@@ -1,31 +1,26 @@
-<!DOCTYPE html>
+<!DOC
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>Test DB Page</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-      <script src="https://d3js.org/d3.v5.min.js"></script>
-      <script>
-		/* console.log("artists");
-		d3.json("{% url "get_artist_data" user_secret %}").then(function(data) {
-			data.forEach(function(d) {
-				console.log(d.name, d.num_songs);
-			});
-		}); */
-
-		console.log("genres");
-        d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
-            data.forEach(function(d) {
-                console.log(d.genre, d.num_songs);
-            });
-        });
-      </script>
-    </body>
+	<!--[if gt IE 8]><!--> 
+<html class="no-js"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Test DB Page</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <svg width="960" height="500"></svg>
+  <script>
+    console.log("genres");
+    d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
+      data.forEach(function(d) {
+        console.log(d.genre, d.num_songs);
+      });
+    });
+  </script>
+</body>
 </html>

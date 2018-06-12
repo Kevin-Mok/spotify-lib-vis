@@ -13,7 +13,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.db.models import Count, Q
-from .utils import parse_library, process_library_stats 
+from .utils import parse_library, process_library_stats, get_artists_in_genre
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
@@ -164,7 +164,8 @@ def user_data(request):
 def test_db(request):
     """TODO
     """
-    user_id = "polarbier"
+    #  user_id = "polarbier"
+    user_id = "35kxo00qqo9pd1comj6ylxjq7"
     context = {
         'user_secret': User.objects.get(user_id=user_id).user_secret,
     }
@@ -180,8 +181,9 @@ def get_artist_data(request, user_secret):
     user = User.objects.get(user_id=user_secret)
     artist_counts = Artist.objects.annotate(num_songs=Count('track',
         filter=Q(track__users=user)))
-    processed_artist_data = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
-    return JsonResponse(data=processed_artist_data, safe=False) 
+    processed_artist_counts = [{'name': artist.name,
+        'num_songs': artist.num_songs} for artist in artist_counts]
+    return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
 
@@ -214,12 +216,14 @@ def get_genre_data(request, user_secret):
     TODO
     """
     user = User.objects.get(user_secret=user_secret)
-    genre_counts = (Track.objects.filter(users=user)
+    genre_counts = (Track.objects.filter(users__exact=user)
             .values('genre')
             .order_by('genre')
             .annotate(num_songs=Count('genre'))
             )
-    #  pprint.pprint(genre_counts)
+    for genre_dict in genre_counts:
+        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'])
+    pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
 
 #  }}} get_genre_data  # 

@@ -4,7 +4,7 @@ import math
 import pprint
 
 from .models import Artist, User, Track, AudioFeatures
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.core import serializers
 import json
@@ -317,7 +317,7 @@ def update_artist_genre(headers, artist_obj):
 
 #  }}} # 
 
-#  {{{ # 
+#  get_top_genre {{{ # 
 
 def get_top_genre(headers, top_artist_id):
     """Updates the top genre for a track by querying the Spotify API
@@ -393,3 +393,19 @@ def process_library_stats(library_stats):
 
 #  }}} process_library_stats # 
 
+def get_artists_in_genre(user, genre):
+    """Return count of artists in genre.
+
+    :genre: genre to count artists for.
+
+    :returns: dict of artists in the genre along with the number of songs they
+    have. 
+    """
+    artist_counts = (Artist.objects.filter(track__users=user)
+            .filter(track__genre=genre) 
+            #  .annotate(num_songs=Count('track', filter=Q(track__genre=genre)))
+            .annotate(num_songs=Count('track'))
+            )
+    processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
+    #  pprint.pprint(processed_artist_counts)
+    return processed_artist_counts
