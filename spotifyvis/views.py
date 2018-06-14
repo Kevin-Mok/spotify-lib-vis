@@ -222,7 +222,8 @@ def get_genre_data(request, user_secret):
             .annotate(num_songs=Count('genre'))
             )
     for genre_dict in genre_counts:
-        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'])
+        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'],
+                genre_dict['num_songs'])
     pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
 

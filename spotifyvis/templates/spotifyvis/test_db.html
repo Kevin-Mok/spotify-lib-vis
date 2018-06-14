@@ -22,8 +22,6 @@
   <svg width="960" height="500"></svg>
   <script>
 
-    // {{{ setup
-
     var svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = +svg.attr("width") - margin.left - margin.right,
@@ -35,8 +33,6 @@
         .align(0.1);
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
-
-    // }}}
 
     d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
       // convert strings to nums
@@ -54,6 +50,7 @@
       data.sort(function(a, b) { return b.num_songs - a.num_songs; });
       x.domain(data.map(function(d) { return d.genre; }));
       y.domain([0, d3.max(data, function(d) { return d.num_songs; }) * 1.25]).nice();
+      //y.domain([0, d3.max(data, function(d) { return d.num_songs; })]).nice();
 
       // setup bar colors
       var max_artists = d3.max(data, function(d) {
@@ -84,7 +81,7 @@
           .data(stack)
           .enter().append("rect")
             .attr("x", x(genre_dict.genre))
-            .attr("y", function(d) { return y(d.data[0]); })
+            .attr("y", function(d) { return y(d.data[1]); })
             .attr("height", d => y(d.data[0]) - y(d.data[1]))
             .attr("width", x.bandwidth())
             .attr('fill', (d, i) => z(i))
