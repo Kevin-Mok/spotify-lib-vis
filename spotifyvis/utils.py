@@ -406,7 +406,8 @@ def get_artists_in_genre(user, genre):
             .filter(track__genre=genre) 
             .annotate(num_songs=Count('track', distinct=True))
             )
-    processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
+    #  processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
+    processed_artist_counts = {artist.name: artist.num_songs for artist in artist_counts}
     #  pprint.pprint(processed_artist_counts)
     return processed_artist_counts
 

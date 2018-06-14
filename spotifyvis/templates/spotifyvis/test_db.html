@@ -1,3 +1,5 @@
+<!-- header {{{ -->
+
 <!DOC
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -11,15 +13,94 @@
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
+
+<!-- }}} header -->
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <svg width="960" height="500"></svg>
   <script>
-    console.log("genres");
+    var svg = d3.select("svg"),
+        margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var x = d3.scaleBand()
+        .rangeRound([0, width])
+        .paddingInner(0.05)
+        .align(0.1);
+
+    var y = d3.scaleLinear()
+        .rangeRound([height, 0]);
+
+    // var z = d3.scaleOrdinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
     d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
       data.forEach(function(d) {
+        d.num_songs = +d.num_songs;
         console.log(d.genre, d.num_songs);
+        var artist_names = Object.keys(d.artists);
+        artist_names.forEach(function(e) {
+          d.artists[e] = +d.artists[e];
+          console.log(e, d.artists[e]);
+          //console.log(e, d.artists[e], d.artists[e] + 1);
+        });
       });
+
+      data.sort(function(a, b) { return b.num_songs - a.num_songs; });
+      x.domain(data.map(function(d) { return d.genre; }));
+      y.domain([0, d3.max(data, function(d) { return d.num_songs; })]).nice();
+
+      for (var genre_dict of data) {
+        var keys = Object.keys(genre_dict.artists);
+        var stack = d3.stack()
+          .keys(keys)([genre_dict.artists])
+          //unpack the column
+          .map((d, i) => {
+            return {
+              key: keys[i],
+              data: d[0]
+            }
+          });
+        //z.domain(keys);
+
+        // bars
+        g.append("g")
+          /*
+          .selectAll("g")
+          .data()
+          .enter().append("g")
+            .attr("fill", function(d) { return z(d.key); })
+          */
+          .selectAll("rect")
+          .data(stack)
+          .enter().append("rect")
+            .attr("x", x(genre_dict.genre))
+            .attr("y", function(d) { return y(d.data[0]); })
+            .attr("height", d => y(d.data[0]) - y(d.data[1]))
+            .attr("width", x.bandwidth())
+            .attr("fill", '#'+(Math.random()*0xFFFFFF<<0).toString(16))
+            .append('title').text(d => d.key + ': ' + (d.data[1] - d.data[0]));
+
+        // x-axis
+        g.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x));
+
+        // y-axis
+        g.append("g")
+            .attr("class", "axis")
+            .call(d3.axisLeft(y).ticks(null, "s"))
+          .append("text")
+            .attr("x", 2)
+            .attr("y", y(y.ticks().pop()) + 0.5)
+            .attr("dy", "0.32em")
+            .attr("fill", "#000")
+            .attr("font-weight", "bold")
+            .attr("text-anchor", "start")
+            .text("Songs");
+      }
     });
   </script>
 </body>
