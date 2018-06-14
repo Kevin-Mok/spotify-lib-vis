@@ -15,27 +15,31 @@
 </head>
 
 <!-- }}} header -->
+
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
   <svg width="960" height="500"></svg>
   <script>
+
+    // {{{ setup
+
     var svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom,
         g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
     var x = d3.scaleBand()
         .rangeRound([0, width])
         .paddingInner(0.05)
         .align(0.1);
-
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-    // var z = d3.scaleOrdinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+    // }}}
 
     d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
+      // convert strings to nums
       data.forEach(function(d) {
         d.num_songs = +d.num_songs;
         console.log(d.genre, d.num_songs);
@@ -49,9 +53,20 @@
 
       data.sort(function(a, b) { return b.num_songs - a.num_songs; });
       x.domain(data.map(function(d) { return d.genre; }));
-      y.domain([0, d3.max(data, function(d) { return d.num_songs; })]).nice();
+      y.domain([0, d3.max(data, function(d) { return d.num_songs; }) * 1.25]).nice();
+
+      // setup bar colors
+      var max_artists = d3.max(data, function(d) {
+        return Object.keys(d.artists).length;
+      });
+      var colorRange = [];
+      for (i = 0; i < max_artists; i++) {
+        colorRange.push(randomColor());
+      }
+      var z = d3.scaleOrdinal().range(colorRange);
 
       for (var genre_dict of data) {
+        // process artist breakdown 
         var keys = Object.keys(genre_dict.artists);
         var stack = d3.stack()
           .keys(keys)([genre_dict.artists])
@@ -62,16 +77,9 @@
               data: d[0]
             }
           });
-        //z.domain(keys);
 
         // bars
         g.append("g")
-          /*
-          .selectAll("g")
-          .data()
-          .enter().append("g")
-            .attr("fill", function(d) { return z(d.key); })
-          */
           .selectAll("rect")
           .data(stack)
           .enter().append("rect")
@@ -79,7 +87,7 @@
             .attr("y", function(d) { return y(d.data[0]); })
             .attr("height", d => y(d.data[0]) - y(d.data[1]))
             .attr("width", x.bandwidth())
-            .attr("fill", '#'+(Math.random()*0xFFFFFF<<0).toString(16))
+            .attr('fill', (d, i) => z(i))
             .append('title').text(d => d.key + ': ' + (d.data[1] - d.data[0]));
 
         // x-axis
