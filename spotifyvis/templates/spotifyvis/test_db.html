@@ -19,9 +19,11 @@
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
-  <svg width="960" height="500"></svg>
-  <script>
+  {% load static %}
+  <script src="{% static "spotifyvis/scripts/genre_graph.js" %}"></script>
 
+  <svg width="1920" height="740"></svg>
+  <script>
     var svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = +svg.attr("width") - margin.left - margin.right,
@@ -34,79 +36,7 @@
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-    d3.json("{% url "get_genre_data" user_secret %}").then(function(data) {
-      // convert strings to nums
-      data.forEach(function(d) {
-        d.num_songs = +d.num_songs;
-        console.log(d.genre, d.num_songs);
-        var artist_names = Object.keys(d.artists);
-        artist_names.forEach(function(e) {
-          d.artists[e] = +d.artists[e];
-          console.log(e, d.artists[e]);
-          //console.log(e, d.artists[e], d.artists[e] + 1);
-        });
-      });
-
-      data.sort(function(a, b) { return b.num_songs - a.num_songs; });
-      x.domain(data.map(function(d) { return d.genre; }));
-      y.domain([0, d3.max(data, function(d) { return d.num_songs; }) * 1.25]).nice();
-      //y.domain([0, d3.max(data, function(d) { return d.num_songs; })]).nice();
-
-      // setup bar colors
-      var max_artists = d3.max(data, function(d) {
-        return Object.keys(d.artists).length;
-      });
-      var colorRange = [];
-      for (i = 0; i < max_artists; i++) {
-        colorRange.push(randomColor());
-      }
-      var z = d3.scaleOrdinal().range(colorRange);
-
-      for (var genre_dict of data) {
-        // process artist breakdown 
-        var keys = Object.keys(genre_dict.artists);
-        var stack = d3.stack()
-          .keys(keys)([genre_dict.artists])
-          //unpack the column
-          .map((d, i) => {
-            return {
-              key: keys[i],
-              data: d[0]
-            }
-          });
-
-        // bars
-        g.append("g")
-          .selectAll("rect")
-          .data(stack)
-          .enter().append("rect")
-            .attr("x", x(genre_dict.genre))
-            .attr("y", function(d) { return y(d.data[1]); })
-            .attr("height", d => y(d.data[0]) - y(d.data[1]))
-            .attr("width", x.bandwidth())
-            .attr('fill', (d, i) => z(i))
-            .append('title').text(d => d.key + ': ' + (d.data[1] - d.data[0]));
-
-        // x-axis
-        g.append("g")
-            .attr("class", "axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(x));
-
-        // y-axis
-        g.append("g")
-            .attr("class", "axis")
-            .call(d3.axisLeft(y).ticks(null, "s"))
-          .append("text")
-            .attr("x", 2)
-            .attr("y", y(y.ticks().pop()) + 0.5)
-            .attr("dy", "0.32em")
-            .attr("fill", "#000")
-            .attr("font-weight", "bold")
-            .attr("text-anchor", "start")
-            .text("Songs");
-      }
-    });
+    d3.json("{% url "get_genre_data" user_secret %}").then(create_genre_graph);
   </script>
 </body>
 </html>

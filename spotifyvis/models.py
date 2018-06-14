@@ -49,7 +49,7 @@ class Track(models.Model):
     year = models.PositiveSmallIntegerField()
     popularity = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField()
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=200)
     users = models.ManyToManyField(User, blank=True)
     genre = models.CharField(max_length=30)
 

@@ -19,7 +19,7 @@ from .models import User, Track, AudioFeatures, Artist
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 15
+TRACKS_TO_QUERY = 100
 
 #  generate_random_string {{{ # 
 

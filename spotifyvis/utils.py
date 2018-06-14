@@ -26,7 +26,7 @@ def parse_library(headers, tracks, user):
     """
     #  TODO: implement importing entire library with 0 as tracks param
     # number of tracks to get with each call
-    limit = 5
+    limit = 50
     # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(limit)}
