@@ -401,11 +401,10 @@ def get_artists_in_genre(user, genre):
     :returns: dict of artists in the genre along with the number of songs they
     have. 
     """
-    artist_counts = (Artist.objects.filter(track__users=user)
-            .filter(track__genre=genre) 
-            #  .annotate(num_songs=Count('track', filter=Q(track__genre=genre)))
-            .annotate(num_songs=Count('track'))
-            )
+    artist_counts = (Artist.objects.filter(track__users=user).distinct()
+                     .filter(track__genre=genre).distinct()
+                     .annotate(num_songs=Count('track'))
+                     )
     processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
     #  pprint.pprint(processed_artist_counts)
     return processed_artist_counts

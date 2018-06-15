@@ -165,7 +165,7 @@ def test_db(request):
     """TODO
     """
     #  user_id = "polarbier"
-    user_id = "35kxo00qqo9pd1comj6ylxjq7"
+    user_id = "chrisshyi13"
     context = {
         'user_secret': User.objects.get(user_id=user_id).user_secret,
     }

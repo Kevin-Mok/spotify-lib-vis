@@ -51,10 +51,14 @@ class Track(models.Model):
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=150)
     users = models.ManyToManyField(User, blank=True)
-    genre = models.CharField(max_length=30)
+    genre = models.CharField(max_length=30, default="")
 
     def __str__(self):
-        return self.name 
+        track_str = "{}, genre: {}, artists: [".format(self.name, self.genre)
+        for artist in self.artists.all():
+            track_str += "{}, ".format(artist.name)
+        track_str += "]"
+        return track_str
 
 #  }}} Track # 
 

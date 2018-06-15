@@ -16,10 +16,71 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
         <p>Logged in as {{ id }}</p>
+        <script src="https://d3js.org/d3.v5.js"></script>
         <script src="{% static "spotifyvis/scripts/user_data.js" %}"></script>
         <script>
             sessionStorage.setItem('user_secret', "{{ user_secret }}");
-            getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
+            let width = 480, height = 300;
+
+            let instrumData = {
+                "0-0.25": 0,
+                "0.25-0.5": 0,
+                "0.5-0.75": 0,
+                "0.75-1.0": 0,
+            };
+            // define the vertical scaling function
+            let vScale = d3.scaleLinear().range([height, 0]);
+
+            // getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
+            d3.json("{% url 'get_audio_feature_data' audio_feature='instrumentalness' client_secret=user_secret %}")
+                .then(function(response) {
+                for (let dataPoint of response.data_points) {
+                    dataPoint = parseFloat(dataPoint);
+                    if (dataPoint > 0.75) {
+                        instrumData["0.75-1.0"] += 1;
+                    } else if (dataPoint > 0.5) {
+                        instrumData["0.5-0.75"] += 1;
+                    } else if (dataPoint > 0.25) {
+                        instrumData["0.25-0.5"] += 1;
+                    } else {
+                        instrumData["0-0.25"] += 1;
+                    }
+                }
+
+                let dataSet = Object.values(instrumData);
+                let dataRanges = Object.keys(instrumData); // Ranges of audio features, e.g. 0-0.25, 0.25-0.5, etc
+                let dataArr = [];
+                // turn the counts into an array of objects, e.g. {range: "0-0.25", counts: 5}
+                for (let i = 0; i < dataRanges.length; i++) {
+                    dataArr.push({
+                        range: dataRanges[i],
+                        counts: instrumData[dataRanges[i]]
+                    });
+                }
+                vScale.domain([0, d3.max(dataSet)]);
+
+                let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]);
+
+                let barWidth = width / dataSet.length;
+
+                let instrumSVG = d3.select('body')
+                    .append('svg').attr('width', width).attr('height', height);
+
+                let xAxis = d3.axisBottom().scale(hScale);
+                let yAxis = d3.axisLeft().scale(vScale);
+
+                let instrumBar = instrumSVG.selectAll('g')
+                    .data(dataArr)
+                    .enter().append('g')
+                    .attr("transform", function(d) { return "translate(" + hScale(d.range) + ",0)"; });
+
+                instrumBar.append('rect')
+                    .attr('y', function(d) { return vScale(d.counts); })
+                    .attr("height", function(d) { return height - vScale(d.counts); })
+                    .attr("width", function(d) { return hScale(d.range); });
+            });
+
+
         </script>
     </body>
 </html>

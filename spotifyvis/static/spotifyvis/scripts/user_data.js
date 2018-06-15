@@ -2,8 +2,9 @@
  * Retrieves data for a specific audio feature for a certain user
  * @param audioFeature: the audio feature for which data will be retrieved
  * @param clientSecret: the client secret, needed for security
+ * @param chartElement: the SVG element in which the data will be plotted
  */
-function getAudioFeatureData(audioFeature, userSecret) {
+function plotAudioFeatureData(audioFeature, userSecret, chartElement) {
     let httpRequest = new XMLHttpRequest();
     /*
      * Handler for the response
@@ -12,10 +13,7 @@ function getAudioFeatureData(audioFeature, userSecret) {
         if (httpRequest.readyState === XMLHttpRequest.DONE) {
             if (httpRequest.status === 200) {
                 let responseData = JSON.parse(httpRequest.responseText);
-                // TODO: The data points need to be plotted instead
-                for (let data of responseData.data_points) {
-                    console.log(data);
-                }
+
             } else {
                 alert("There was a problem with the login request, please try again!");
             }
