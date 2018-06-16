@@ -19,78 +19,87 @@
         <script src="https://d3js.org/d3.v5.js"></script>
         <script src="{% static "spotifyvis/scripts/user_data.js" %}"></script>
         <script type="text/javascript">
-            let margin = {top: 20, right: 30, bottom: 30, left: 40};
-            let width = 720 - margin.left - margin.right,
-                height = 420 - margin.top - margin.bottom;
 
-            let instrumData = {
-                "0-0.25": 0,
-                "0.25-0.5": 0,
-                "0.5-0.75": 0,
-                "0.75-1.0": 0,
-            };
-            // define the vertical scaling function
-            let vScale = d3.scaleLinear().range([height, 0]);
+            function drawAudioFeatGraph(audioFeature) {
+                let margin = {top: 20, right: 30, bottom: 30, left: 40};
+                let width = 720 - margin.left - margin.right,
+                    height = 420 - margin.top - margin.bottom;
 
-            // getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
-            d3.json("{% url 'get_audio_feature_data' audio_feature='instrumentalness' client_secret=user_secret %}")
-                .then(function(response) {
-                for (let dataPoint of response.data_points) {
-                    dataPoint = parseFloat(dataPoint);
-                    if (dataPoint > 0.75) {
-                        instrumData["0.75-1.0"] += 1;
-                    } else if (dataPoint > 0.5) {
-                        instrumData["0.5-0.75"] += 1;
-                    } else if (dataPoint > 0.25) {
-                        instrumData["0.25-0.5"] += 1;
-                    } else {
-                        instrumData["0-0.25"] += 1;
+                let featureData = {
+                    "0-0.25": 0,
+                    "0.25-0.5": 0,
+                    "0.5-0.75": 0,
+                    "0.75-1.0": 0,
+                };
+                // define the vertical scaling function
+                let vScale = d3.scaleLinear().range([height, 0]);
+
+                // getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
+                d3.json(`/audio_features/${audioFeature}/{{ user_secret }}`)
+                    .then(function(response) {
+                    for (let dataPoint of response.data_points) {
+                        dataPoint = parseFloat(dataPoint);
+                        if (dataPoint > 0.75) {
+                            featureData["0.75-1.0"] += 1;
+                        } else if (dataPoint > 0.5) {
+                            featureData["0.5-0.75"] += 1;
+                        } else if (dataPoint > 0.25) {
+                            featureData["0.25-0.5"] += 1;
+                        } else {
+                            featureData["0-0.25"] += 1;
+                        }
                     }
-                }
 
-                let dataSet = Object.values(instrumData);
-                let dataRanges = Object.keys(instrumData); // Ranges of audio features, e.g. 0-0.25, 0.25-0.5, etc
-                let dataArr = [];
-                // turn the counts into an array of objects, e.g. {range: "0-0.25", counts: 5}
-                for (let i = 0; i < dataRanges.length; i++) {
-                    dataArr.push({
-                        range: dataRanges[i],
-                        counts: instrumData[dataRanges[i]]
-                    });
-                }
-                vScale.domain([0, d3.max(dataSet)]);
+                    let dataSet = Object.values(featureData);
+                    let dataRanges = Object.keys(featureData); // Ranges of audio features, e.g. 0-0.25, 0.25-0.5, etc
+                    let dataArr = [];
+                    // turn the counts into an array of objects, e.g. {range: "0-0.25", counts: 5}
+                    for (let i = 0; i < dataRanges.length; i++) {
+                        dataArr.push({
+                            range: dataRanges[i],
+                            counts: featureData[dataRanges[i]]
+                        });
+                    }
+                    vScale.domain([0, d3.max(dataSet)]);
 
-                let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.4);
+                    let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.4);
 
-                let xAxis = d3.axisBottom().scale(hScale);
-                let yAxis = d3.axisLeft().scale(vScale);
+                    let xAxis = d3.axisBottom().scale(hScale);
+                    let yAxis = d3.axisLeft().scale(vScale);
 
-                let instrumGraph = d3.select('body')
-                    .append('svg').attr('width', width + margin.left + margin.right)
-                    .attr('height', height + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+                    let featureGraph = d3.select('body')
+                        .append('svg').attr('width', width + margin.left + margin.right)
+                        .attr('height', height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", `translate(${margin.left}, ${margin.top})`)
+                        .attr("fill", "teal");
 
-                instrumGraph.selectAll(".bar")
-                    .data(dataArr)
-                    .enter().append('rect')
-                    .attr('class', 'bar')
-                    .attr('x', function(d) { return hScale(d.range); })
-                    .attr('y', function(d) { return vScale(d.counts); })
-                    .attr("height", function(d) { return height - vScale(d.counts); })
-                    .attr("width", hScale.bandwidth());
+                    featureGraph.selectAll(".bar")
+                        .data(dataArr)
+                        .enter().append('rect')
+                        .attr('class', 'bar')
+                        .attr('x', function(d) { return hScale(d.range); })
+                        .attr('y', function(d) { return vScale(d.counts); })
+                        .attr("height", function(d) { return height - vScale(d.counts); })
+                        .attr("width", hScale.bandwidth());
 
-                // function(d) { return hScale(d.range); }
+                    // function(d) { return hScale(d.range); }
 
-                instrumGraph.append('g')
-                    .attr('class', 'axis')
-                    .attr('transform', `translate(0, ${height})`)
-                    .call(xAxis);
+                    featureGraph.append('g')
+                        .attr('class', 'axis')
+                        .attr('transform', `translate(0, ${height})`)
+                        .call(xAxis);
 
-                instrumGraph.append('g')
-                    .attr('class', 'axis')
-                    .call(yAxis);
-            });
+                    featureGraph.append('g')
+                        .attr('class', 'axis')
+                        .call(yAxis);
+                });
+            }
+
+            drawAudioFeatGraph("instrumentalness");
+            drawAudioFeatGraph("valence");
+            drawAudioFeatGraph("energy");
+
 
 
         </script>
