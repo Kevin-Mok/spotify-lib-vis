@@ -18,9 +18,10 @@
         <p>Logged in as {{ id }}</p>
         <script src="https://d3js.org/d3.v5.js"></script>
         <script src="{% static "spotifyvis/scripts/user_data.js" %}"></script>
-        <script>
-            sessionStorage.setItem('user_secret', "{{ user_secret }}");
-            let width = 480, height = 300;
+        <script type="text/javascript">
+            let margin = {top: 20, right: 30, bottom: 30, left: 40};
+            let width = 720 - margin.left - margin.right,
+                height = 420 - margin.top - margin.bottom;
 
             let instrumData = {
                 "0-0.25": 0,
@@ -59,25 +60,36 @@
                 }
                 vScale.domain([0, d3.max(dataSet)]);
 
-                let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]);
-
-                let barWidth = width / dataSet.length;
-
-                let instrumSVG = d3.select('body')
-                    .append('svg').attr('width', width).attr('height', height);
+                let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.4);
 
                 let xAxis = d3.axisBottom().scale(hScale);
                 let yAxis = d3.axisLeft().scale(vScale);
 
-                let instrumBar = instrumSVG.selectAll('g')
-                    .data(dataArr)
-                    .enter().append('g')
-                    .attr("transform", function(d) { return "translate(" + hScale(d.range) + ",0)"; });
+                let instrumGraph = d3.select('body')
+                    .append('svg').attr('width', width + margin.left + margin.right)
+                    .attr('height', height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-                instrumBar.append('rect')
+                instrumGraph.selectAll(".bar")
+                    .data(dataArr)
+                    .enter().append('rect')
+                    .attr('class', 'bar')
+                    .attr('x', function(d) { return hScale(d.range); })
                     .attr('y', function(d) { return vScale(d.counts); })
                     .attr("height", function(d) { return height - vScale(d.counts); })
-                    .attr("width", function(d) { return hScale(d.range); });
+                    .attr("width", hScale.bandwidth());
+
+                // function(d) { return hScale(d.range); }
+
+                instrumGraph.append('g')
+                    .attr('class', 'axis')
+                    .attr('transform', `translate(0, ${height})`)
+                    .call(xAxis);
+
+                instrumGraph.append('g')
+                    .attr('class', 'axis')
+                    .call(yAxis);
             });
 
 
