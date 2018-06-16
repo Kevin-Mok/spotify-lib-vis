@@ -24,20 +24,20 @@
              *  illustrating the frequencies of values, and appends the chart to
              *  <body></body>
              *
-             *  @param audioFeature: the name of the audio feature
+             *  @param audioFeature: the name of the audio feature (string)
+             *  @param intervalEndPoints: a sorted array of 5 real numbers defining the intervals (categories) of values,
+             *  for example:
+             *      [0, 0.25, 0.5, 0.75, 1.0] for instrumentalness would define ranges
+             *      (0-0.25), (0.25-0.5), (0.5-0.75), (0.75-1.0)
+             *  @param parentElem: the DOM element to append the graph to (a selector string)
              *  @return None
              */
-            function drawAudioFeatGraph(audioFeature) {
+            function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem) {
                 let margin = {top: 20, right: 30, bottom: 30, left: 40};
                 let width = 720 - margin.left - margin.right,
                     height = 420 - margin.top - margin.bottom;
 
-                let featureData = {
-                    "0-0.25": 0,
-                    "0.25-0.5": 0,
-                    "0.5-0.75": 0,
-                    "0.75-1.0": 0,
-                };
+                let featureData = {};
                 // define the vertical scaling function
                 let vScale = d3.scaleLinear().range([height, 0]);
 
@@ -46,14 +46,26 @@
                     .then(function(response) {
                     for (let dataPoint of response.data_points) {
                         dataPoint = parseFloat(dataPoint);
-                        if (dataPoint > 0.75) {
-                            featureData["0.75-1.0"] += 1;
-                        } else if (dataPoint > 0.5) {
-                            featureData["0.5-0.75"] += 1;
-                        } else if (dataPoint > 0.25) {
-                            featureData["0.25-0.5"] += 1;
+                        if (dataPoint > intervalEndPoints[3]) {
+                            if (!featureData.hasOwnProperty(`${intervalEndPoints[3]}-${intervalEndPoints[4]}`)) {
+                                featureData[`${intervalEndPoints[3]}-${intervalEndPoints[4]}`] = 0;
+                            }
+                            featureData[`${intervalEndPoints[3]}-${intervalEndPoints[4]}`] += 1;
+                        } else if (dataPoint > intervalEndPoints[2]) {
+                            if (!featureData.hasOwnProperty(`${intervalEndPoints[2]}-${intervalEndPoints[3]}`)) {
+                                featureData[`${intervalEndPoints[2]}-${intervalEndPoints[3]}`] = 0;
+                            }
+                            featureData[`${intervalEndPoints[2]}-${intervalEndPoints[3]}`] += 1;
+                        } else if (dataPoint > intervalEndPoints[1]) {
+                            if (!featureData.hasOwnProperty(`${intervalEndPoints[1]}-${intervalEndPoints[2]}`)) {
+                                featureData[`${intervalEndPoints[1]}-${intervalEndPoints[2]}`] = 0;
+                            }
+                            featureData[`${intervalEndPoints[1]}-${intervalEndPoints[2]}`] += 1;
                         } else {
-                            featureData["0-0.25"] += 1;
+                            if (!featureData.hasOwnProperty(`${intervalEndPoints[0]}-${intervalEndPoints[1]}`)) {
+                                featureData[`${intervalEndPoints[0]}-${intervalEndPoints[1]}`] = 0;
+                            }
+                            featureData[`${intervalEndPoints[0]}-${intervalEndPoints[1]}`] += 1;
                         }
                     }
 
@@ -74,7 +86,7 @@
                     let xAxis = d3.axisBottom().scale(hScale);
                     let yAxis = d3.axisLeft().scale(vScale);
 
-                    let featureSVG = d3.select('body')
+                    let featureSVG = d3.select(parentElem)
                         .append('svg').attr('width', width + margin.left + margin.right)
                         .attr('height', height + margin.top + margin.bottom);
 
@@ -107,7 +119,7 @@
                         .attr('y', (margin.top / 2))
                         .attr('text-anchor', 'middle')
                         .style('font-size', '14px')
-                        .text(`${capFeatureStr(audioFeature)} distribution`);
+                        .text(`${capFeatureStr(audioFeature)}`);
 
                 });
             }
@@ -121,9 +133,9 @@
                 return audioFeature.charAt(0).toUpperCase() + audioFeature.slice(1);
             }
 
-            drawAudioFeatGraph("instrumentalness");
-            drawAudioFeatGraph("valence");
-            drawAudioFeatGraph("energy");
+            drawAudioFeatGraph("instrumentalness", [0, 0.25, 0.5, 0.75, 1.0], 'body');
+            drawAudioFeatGraph("valence", [0, 0.25, 0.5, 0.75, 1.0], 'body');
+            drawAudioFeatGraph("energy", [0, 0.25, 0.5, 0.75, 1.0], 'body');
 
 
 
