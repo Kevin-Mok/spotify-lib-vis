@@ -10,6 +10,11 @@
         <title>User Spotify Data</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            .tick {
+                font-size: 15px;
+            }
+        </style>
     </head>
     <body>
         <!--[if lt IE 7]>
@@ -34,8 +39,8 @@
              */
             function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem) {
                 let margin = {top: 20, right: 30, bottom: 30, left: 40};
-                let width = 720 - margin.left - margin.right,
-                    height = 420 - margin.top - margin.bottom;
+                let width = 480 - margin.left - margin.right,
+                    height = 270 - margin.top - margin.bottom;
 
                 let featureData = {};
                 // define the vertical scaling function
@@ -44,29 +49,19 @@
                 // getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
                 d3.json(`/audio_features/${audioFeature}/{{ user_secret }}`)
                     .then(function(response) {
+                    // categorize the data points
                     for (let dataPoint of response.data_points) {
                         dataPoint = parseFloat(dataPoint);
-                        if (dataPoint > intervalEndPoints[3]) {
-                            if (!featureData.hasOwnProperty(`${intervalEndPoints[3]}-${intervalEndPoints[4]}`)) {
-                                featureData[`${intervalEndPoints[3]}-${intervalEndPoints[4]}`] = 0;
-                            }
-                            featureData[`${intervalEndPoints[3]}-${intervalEndPoints[4]}`] += 1;
-                        } else if (dataPoint > intervalEndPoints[2]) {
-                            if (!featureData.hasOwnProperty(`${intervalEndPoints[2]}-${intervalEndPoints[3]}`)) {
-                                featureData[`${intervalEndPoints[2]}-${intervalEndPoints[3]}`] = 0;
-                            }
-                            featureData[`${intervalEndPoints[2]}-${intervalEndPoints[3]}`] += 1;
-                        } else if (dataPoint > intervalEndPoints[1]) {
-                            if (!featureData.hasOwnProperty(`${intervalEndPoints[1]}-${intervalEndPoints[2]}`)) {
-                                featureData[`${intervalEndPoints[1]}-${intervalEndPoints[2]}`] = 0;
-                            }
-                            featureData[`${intervalEndPoints[1]}-${intervalEndPoints[2]}`] += 1;
-                        } else {
-                            if (!featureData.hasOwnProperty(`${intervalEndPoints[0]}-${intervalEndPoints[1]}`)) {
-                                featureData[`${intervalEndPoints[0]}-${intervalEndPoints[1]}`] = 0;
-                            }
-                            featureData[`${intervalEndPoints[0]}-${intervalEndPoints[1]}`] += 1;
+                        let index = intervalEndPoints.length - 2;
+                        // find the index of the first element greater than dataPoint
+                        while (dataPoint < intervalEndPoints[index]) {
+                            index -= 1;
                         }
+                        let key = `${intervalEndPoints[index]}-${intervalEndPoints[index + 1]}`;
+                        if (!featureData.hasOwnProperty(key)) {
+                            featureData[key] = 0;
+                        }
+                        featureData[key] += 1;
                     }
 
                     let dataSet = Object.values(featureData);
@@ -136,6 +131,7 @@
             drawAudioFeatGraph("instrumentalness", [0, 0.25, 0.5, 0.75, 1.0], 'body');
             drawAudioFeatGraph("valence", [0, 0.25, 0.5, 0.75, 1.0], 'body');
             drawAudioFeatGraph("energy", [0, 0.25, 0.5, 0.75, 1.0], 'body');
+            drawAudioFeatGraph("tempo", [40, 80, 120, 160, 200], 'body');
 
 
 
