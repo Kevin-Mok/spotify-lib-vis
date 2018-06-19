@@ -5,7 +5,7 @@ import random
 import requests
 import os
 import urllib
-import json
+import secrets
 import pprint
 import string
 from datetime import datetime
@@ -146,7 +146,8 @@ def user_data(request):
     try:
         user = User.objects.get(user_id=user_data_response['id'])
     except User.DoesNotExist:
-        user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
+        # Python docs recommends 32 bytes of randomness against brute force attacks
+        user = User(user_id=user_data_response['id'], user_secret=secrets.token_urlsafe(32))
         user.save()
 
     context = {
