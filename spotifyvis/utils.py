@@ -127,7 +127,7 @@ def save_audio_features(headers, track_id, track):
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
     if 'error' in response:
-        return {}
+        return
 
     # Data that we don't need
     useless_keys = [ 

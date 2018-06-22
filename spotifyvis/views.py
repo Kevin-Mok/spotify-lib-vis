@@ -203,8 +203,11 @@ def get_audio_feature_data(request, audio_feature, client_secret):
         'data_points': [],
     }
     for track in user_tracks:
-        audio_feature_obj = AudioFeatures.objects.get(track=track)
-        response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+        try:
+            audio_feature_obj = AudioFeatures.objects.get(track=track)
+            response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+        except AudioFeatures.DoesNotExist:
+            continue
     return JsonResponse(response_payload)
 
 #  }}} get_audio_feature_data # 
