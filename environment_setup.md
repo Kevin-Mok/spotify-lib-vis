@@ -1,10 +1,12 @@
+Before starting the setup, make sure **Python 3.6** is installed on your system.
+
 1. Use the pip tool to install `virtualenv`
 
     [Guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/)
 
 2. Create a virtual environment in an empty directory: 
 
-    `virtualenv -p <path to python3 executable> <path to empty directory>`
+    `virtualenv -p <path to python3.6 executable> <path to empty directory>`
 
 3. cd into the directory you just created a virtual environment in, and clone our GitHub repo
 
