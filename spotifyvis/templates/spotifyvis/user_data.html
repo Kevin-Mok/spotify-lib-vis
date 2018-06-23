@@ -74,7 +74,7 @@
                             counts: featureData[dataRanges[i]]
                         });
                     }
-                    vScale.domain([0, d3.max(dataSet)]);
+                    vScale.domain([0, d3.max(dataSet)]).nice();
 
                     let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.5);
 
