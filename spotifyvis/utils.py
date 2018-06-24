@@ -3,8 +3,8 @@ import requests
 import math
 import pprint
 
-from .models import Artist, User, Track, AudioFeatures
-from django.db.models import Count, Q
+from .models import *
+from django.db.models import Count, Q, F
 from django.http import JsonResponse
 from django.core import serializers
 import json
@@ -12,7 +12,6 @@ import json
 #  }}} imports # 
 
 #  parse_library {{{ # 
-
 
 def parse_library(headers, tracks, user):
     """Scans user's library for certain number of tracks to update library_stats with.
@@ -48,6 +47,8 @@ def parse_library(headers, tracks, user):
                     artist_id=artist_dict['id'],
                     name=artist_dict['name'],
                     )
+                if artist_created:
+                    tally_artist_genres(headers, artist_dict['id'])
 
                 #  update_artist_genre(headers, artist_obj)
                 # get_or_create() returns a tuple (obj, created)
@@ -59,8 +60,8 @@ def parse_library(headers, tracks, user):
                     track_artists, top_genre, user)
 
             # if a new track is not created, the associated audio feature does not need to be created again
-            if track_created:
-                save_audio_features(headers, track_dict['track']['id'], track_obj)
+            #  if track_created:
+            save_audio_features(headers, track_dict['track']['id'], track_obj)
             """
             TODO: Put this logic in another function
             # Audio analysis could be empty if not present in Spotify database
@@ -100,7 +101,7 @@ def save_track_obj(track_dict, artists, top_genre, user):
             popularity=int(track_dict['popularity']),
             runtime=int(float(track_dict['duration_ms']) / 1000),
             name=track_dict['name'],
-            genre=top_genre,
+            #  genre=top_genre,
             )
 
         # have to add artists and user after saving object since track needs to
@@ -126,6 +127,8 @@ def save_audio_features(headers, track_id, track):
     """
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
+    if track_id is '5S1IUPueD0xE0vj4zU3nSf':
+        pprint.pprint(response)
     if 'error' in response:
         return
 
@@ -330,12 +333,32 @@ def get_top_genre(headers, top_artist_id):
     """
     artist_response = requests.get('https://api.spotify.com/v1/artists/' +
             top_artist_id, headers=headers).json()
+    #  pprint.pprint(artist_response)
     if len(artist_response['genres']) > 0:
         return artist_response['genres'][0]
     else:
         return "undefined"
 
 #  }}} # 
+
+def tally_artist_genres(headers, artist_id):
+    """Tallies up genres for artist for the respective Genre models. Should be
+    called when new Artist object is created.
+
+    :headers: For making the API call.
+    :artist_id: Artist ID for which to tally up genres for.
+
+    :returns: None
+
+    """
+    artist_response = requests.get('https://api.spotify.com/v1/artists/' +
+            artist_id, headers=headers).json()
+    for genre in artist_response['genres']:
+        genre_obj, created = Genre.objects.get_or_create(name=genre,
+                defaults={'num_songs':1})
+        if not created:
+            genre_obj.num_songs = F('num_songs') +1
+            genre_obj.save()
 
 #  process_library_stats {{{ # 
 

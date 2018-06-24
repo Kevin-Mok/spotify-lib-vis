@@ -35,6 +35,18 @@ class User(models.Model):
 
 #  }}} User # 
 
+class Genre(models.Model):
+            
+    class Meta:
+        verbose_name = "Genre"
+        verbose_name_plural = "Genres"
+
+    name = models.CharField(primary_key=True, max_length=50)
+    num_songs = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.name
+
 #  Track {{{ # 
 
 class Track(models.Model):
@@ -51,7 +63,9 @@ class Track(models.Model):
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=200)
     users = models.ManyToManyField(User, blank=True)
-    genre = models.CharField(max_length=30)
+    #  genre = models.CharField(max_length=30)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE, blank=True,
+            null=True)
 
     def __str__(self):
         return self.name 
@@ -59,7 +73,6 @@ class Track(models.Model):
 #  }}} Track # 
 
 #  AudioFeatures {{{ # 
-
 
 class AudioFeatures(models.Model):
         
