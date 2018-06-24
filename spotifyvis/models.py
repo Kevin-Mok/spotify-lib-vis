@@ -3,6 +3,22 @@ from django.db import models
 # id's are 22 in length in examples but set to 30 for buffer
 MAX_ID = 30
 
+#  Genre {{{ # 
+
+class Genre(models.Model):
+            
+    class Meta:
+        verbose_name = "Genre"
+        verbose_name_plural = "Genres"
+
+    name = models.CharField(primary_key=True, max_length=50)
+    num_songs = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.name
+
+#  }}} Genre # 
+
 #  Artist {{{ # 
 
 
@@ -14,6 +30,7 @@ class Artist(models.Model):
     artist_id = models.CharField(primary_key=True, max_length=MAX_ID)
     # unique since only storing one genre per artist right now
     name = models.CharField(unique=True, max_length=50)
+    genres = models.ManyToManyField(Genre, blank=True)
 
     def __str__(self):
         return self.name
@@ -34,18 +51,6 @@ class User(models.Model):
         return self.user_id
 
 #  }}} User # 
-
-class Genre(models.Model):
-            
-    class Meta:
-        verbose_name = "Genre"
-        verbose_name_plural = "Genres"
-
-    name = models.CharField(primary_key=True, max_length=50)
-    num_songs = models.PositiveIntegerField()
-
-    def __str__(self):
-        return self.name
 
 #  Track {{{ # 
 

@@ -48,7 +48,7 @@ def parse_library(headers, tracks, user):
                     name=artist_dict['name'],
                     )
                 if artist_created:
-                    tally_artist_genres(headers, artist_dict['id'])
+                    add_artist_genres(headers, artist_obj)
 
                 #  update_artist_genre(headers, artist_obj)
                 # get_or_create() returns a tuple (obj, created)
@@ -341,24 +341,26 @@ def get_top_genre(headers, top_artist_id):
 
 #  }}} # 
 
-def tally_artist_genres(headers, artist_id):
-    """Tallies up genres for artist for the respective Genre models. Should be
-    called when new Artist object is created.
+def add_artist_genres(headers, artist_obj):
+    """Adds genres to artist_obj and increases the count the respective Genre
+    object. Should be called when a new Artist object is created.
 
     :headers: For making the API call.
-    :artist_id: Artist ID for which to tally up genres for.
+    :artist_obj: Artist object for which to add/tally up genres for.
 
     :returns: None
 
     """
     artist_response = requests.get('https://api.spotify.com/v1/artists/' +
-            artist_id, headers=headers).json()
+            artist_obj.artist_id, headers=headers).json()
     for genre in artist_response['genres']:
         genre_obj, created = Genre.objects.get_or_create(name=genre,
                 defaults={'num_songs':1})
         if not created:
             genre_obj.num_songs = F('num_songs') +1
             genre_obj.save()
+        artist_obj.genres.add(genre_obj)
+        artist_obj.save()
 
 #  process_library_stats {{{ # 
 
