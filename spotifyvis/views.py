@@ -13,7 +13,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.db.models import Count, Q
-from .utils import parse_library, process_library_stats, get_artists_in_genre
+from .utils import parse_library, process_library_stats, get_artists_in_genre, update_track_genres
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
@@ -165,10 +165,12 @@ def test_db(request):
     """TODO
     """
     user_id = "polarbier"
+    user_obj = User.objects.get(user_id=user_id)
     #  user_id = "35kxo00qqo9pd1comj6ylxjq7"
     context = {
-        'user_secret': User.objects.get(user_id=user_id).user_secret,
+        'user_secret': user_obj.user_secret,
     }
+    update_track_genres(user_obj)
     return render(request, 'spotifyvis/test_db.html', context)
 
 #  }}} test_db # 

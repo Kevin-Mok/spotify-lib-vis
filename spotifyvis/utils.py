@@ -76,8 +76,26 @@ def parse_library(headers, tracks, user):
         # calculates num_songs with offset + songs retrieved
         offset += limit
     #  pprint.pprint(library_stats)
+    update_track_genres(user)
 
 #  }}} parse_library # 
+
+def update_track_genres(user):
+    """Updates user's tracks with the most common genre associated with the
+    songs' artist(s).
+
+    :user: User object who's tracks are being updated.
+
+    :returns: None
+
+    """
+    user_tracks = Track.objects.filter(users__exact=user)
+    for track in user_tracks:
+        track_artists = list(track.artists.all())
+        if len(track_artists) == 1:
+            track.genre = track_artists[0].genres.all().order_by('-num_songs').first()
+            track.save()
+            #  print(track_artists, track.genre)
 
 #  save_track_obj {{{ # 
 
@@ -341,6 +359,8 @@ def get_top_genre(headers, top_artist_id):
 
 #  }}} # 
 
+#  add_artist_genres {{{ # 
+
 def add_artist_genres(headers, artist_obj):
     """Adds genres to artist_obj and increases the count the respective Genre
     object. Should be called when a new Artist object is created.
@@ -361,6 +381,8 @@ def add_artist_genres(headers, artist_obj):
             genre_obj.save()
         artist_obj.genres.add(genre_obj)
         artist_obj.save()
+
+#  }}}  add_artist_genres # 
 
 #  process_library_stats {{{ # 
 
