@@ -11,6 +11,11 @@ import json
 
 #  }}} imports # 
 
+USER_TRACKS_LIMIT = 50
+#  ARTIST_LIMIT = 50
+ARTIST_LIMIT = 25
+FEATURES_LIMIT = 100
+
 #  parse_library {{{ # 
 
 def parse_library(headers, tracks, user):
@@ -24,14 +29,13 @@ def parse_library(headers, tracks, user):
 
     """
     #  TODO: implement importing entire library with 0 as tracks param
-    # number of tracks to get with each call
-    limit = 50
     # keeps track of point to get songs from
     offset = 0
-    payload = {'limit': str(limit)}
+    payload = {'limit': str(USER_TRACKS_LIMIT)}
+    artist_genre_queue = []
 
     # iterate until hit requested num of tracks
-    for _ in range(0, tracks, limit):
+    for _ in range(0, tracks, USER_TRACKS_LIMIT):
         payload['offset'] = str(offset)
         # get current set of tracks
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
@@ -48,14 +52,18 @@ def parse_library(headers, tracks, user):
                     name=artist_dict['name'],
                     )
                 if artist_created:
-                    add_artist_genres(headers, artist_obj)
+                    artist_genre_queue.append(artist_obj)
+                    if len(artist_genre_queue) == ARTIST_LIMIT:
+                        add_artist_genres(headers, artist_genre_queue)
+                        artist_genre_queue = []
 
                 #  update_artist_genre(headers, artist_obj)
                 # get_or_create() returns a tuple (obj, created)
                 track_artists.append(artist_obj)
             
-            top_genre = get_top_genre(headers,
-                    track_dict['track']['artists'][0]['id'])
+            #  top_genre = get_top_genre(headers,
+                    #  track_dict['track']['artists'][0]['id'])
+            top_genre = ""
             track_obj, track_created = save_track_obj(track_dict['track'], 
                     track_artists, top_genre, user)
 
@@ -74,8 +82,12 @@ def parse_library(headers, tracks, user):
                             feature_data_points, library_stats)
             """
         # calculates num_songs with offset + songs retrieved
-        offset += limit
+        offset += USER_TRACKS_LIMIT
     #  pprint.pprint(library_stats)
+
+    # update artists left in queue since there will be probably be leftover
+    # artists that didn't hit ARTIST_LIMIT
+    add_artist_genres(headers, artist_genre_queue)
     update_track_genres(user)
 
 #  }}} parse_library # 
@@ -359,30 +371,31 @@ def get_top_genre(headers, top_artist_id):
 
 #  }}} # 
 
-#  add_artist_genres {{{ # 
-
-def add_artist_genres(headers, artist_obj):
-    """Adds genres to artist_obj and increases the count the respective Genre
-    object. Should be called when a new Artist object is created.
+def add_artist_genres(headers, artist_objs):
+    """Adds genres to artist_objs and increases the count the respective Genre
+    object. artist_objs should contain the API limit for a single call
+    (ARTIST_LIMIT) for maximum efficiency.
 
     :headers: For making the API call.
-    :artist_obj: Artist object for which to add/tally up genres for.
+    :artist_objs: List of Artist objects for which to add/tally up genres for.
 
     :returns: None
 
     """
-    artist_response = requests.get('https://api.spotify.com/v1/artists/' +
-            artist_obj.artist_id, headers=headers).json()
-    for genre in artist_response['genres']:
-        genre_obj, created = Genre.objects.get_or_create(name=genre,
-                defaults={'num_songs':1})
-        if not created:
-            genre_obj.num_songs = F('num_songs') +1
-            genre_obj.save()
-        artist_obj.genres.add(genre_obj)
-        artist_obj.save()
-
-#  }}}  add_artist_genres # 
+    artist_ids = str.join(",", [artist_obj.artist_id for artist_obj in artist_objs])
+    #  print(len(artist_objs), artist_ids)
+    params = {'ids': artist_ids}
+    artists_response = requests.get('https://api.spotify.com/v1/artists/',
+            headers=headers, params=params).json()['artists']
+    for i in range(len(artist_objs)):
+        for genre in artists_response[i]['genres']:
+            genre_obj, created = Genre.objects.get_or_create(name=genre,
+                    defaults={'num_songs':1})
+            if not created:
+                genre_obj.num_songs = F('num_songs') +1
+                genre_obj.save()
+            artist_objs[i].genres.add(genre_obj)
+            artist_objs[i].save()
 
 #  process_library_stats {{{ # 
 

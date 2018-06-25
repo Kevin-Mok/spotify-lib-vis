@@ -19,7 +19,7 @@ from .models import User, Track, AudioFeatures, Artist
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 100
+TRACKS_TO_QUERY = 50
 
 #  generate_random_string {{{ # 
 
@@ -65,8 +65,8 @@ def index(request):
 
 #  login {{{ # 
 
+# uses Authorization Code flow
 def login(request):
-
     # use a randomly generated state string to prevent cross-site request forgery attacks
     state_str = generate_random_string(16)
     request.session['state_string'] = state_str 
