@@ -20,9 +20,8 @@
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ id }}</p>
+        <p>Logged in as {{ user_id }}</p>
         <script src="https://d3js.org/d3.v5.js"></script>
-        <script src="{% static "spotifyvis/scripts/user_data.js" %}"></script>
         <script type="text/javascript">
 
             /** Queries the backend for audio feature data, draws the bar chart
@@ -43,10 +42,14 @@
                     height = 270 - margin.top - margin.bottom;
 
                 let featureData = {};
+                // Create the keys first in order
+                for (let index = 0; index < intervalEndPoints.length - 1; index++) {
+                    let key = `${intervalEndPoints[index]} ~ ${intervalEndPoints[index + 1]}`;
+                    featureData[key] = 0;
+                }
                 // define the vertical scaling function
                 let vScale = d3.scaleLinear().range([height, 0]);
 
-                // getAudioFeatureData('instrumentalness', sessionStorage.getItem('user_secret'));
                 d3.json(`/audio_features/${audioFeature}/{{ user_secret }}`)
                     .then(function(response) {
                     // categorize the data points
@@ -57,10 +60,7 @@
                         while (dataPoint < intervalEndPoints[index]) {
                             index -= 1;
                         }
-                        let key = `${intervalEndPoints[index]}-${intervalEndPoints[index + 1]}`;
-                        if (!featureData.hasOwnProperty(key)) {
-                            featureData[key] = 0;
-                        }
+                        let key = `${intervalEndPoints[index]} ~ ${intervalEndPoints[index + 1]}`;
                         featureData[key] += 1;
                     }
 
@@ -132,9 +132,10 @@
             drawAudioFeatGraph("valence", [0, 0.25, 0.5, 0.75, 1.0], 'body');
             drawAudioFeatGraph("energy", [0, 0.25, 0.5, 0.75, 1.0], 'body');
             drawAudioFeatGraph("tempo", [40, 80, 120, 160, 200], 'body');
-
-
-
+            drawAudioFeatGraph("danceability", [0, 0.25, 0.5, 0.75, 1.0], 'body');
+            drawAudioFeatGraph("acousticness", [0, 0.25, 0.5, 0.75, 1.0], 'body');
+            drawAudioFeatGraph("loudness", [-60, -45, -30, -15, 0], 'body');
+            drawAudioFeatGraph("speechiness", [0, 0.25, 0.5, 0.75, 1.0], 'body');
         </script>
     </body>
 </html>
