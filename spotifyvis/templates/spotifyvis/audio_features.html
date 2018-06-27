@@ -50,7 +50,7 @@
                 // define the vertical scaling function
                 let vScale = d3.scaleLinear().range([height, 0]);
 
-                d3.json(`/audio_features/${audioFeature}/{{ user_secret }}`)
+                d3.json(`/api/audio_features/${audioFeature}/{{ user_secret }}`)
                     .then(function(response) {
                     // categorize the data points
                     for (let dataPoint of response.data_points) {

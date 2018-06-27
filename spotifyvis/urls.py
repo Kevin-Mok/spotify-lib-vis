@@ -14,6 +14,6 @@ urlpatterns = [
     path('graphs/genre/<str:client_secret>', display_genre_graph,
         name='display_genre_graph'),
     path('audio_features/<str:client_secret>', audio_features, name='audio_features'),
-    path('audio_features/<str:audio_feature>/<str:client_secret>',
+    path('api/audio_features/<str:audio_feature>/<str:client_secret>',
         get_audio_feature_data, name='get_audio_feature_data'),
 ]

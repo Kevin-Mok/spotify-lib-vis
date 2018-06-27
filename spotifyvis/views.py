@@ -205,6 +205,12 @@ def display_genre_graph(request, client_secret):
     return render(request, "spotifyvis/genre_graph.html", context)
 
 def audio_features(request, client_secret):
+    """Renders the audio features page
+
+    :param request: the HTTP request
+    :param client_secret: user secret used for identification
+    :return: renders the audio features page
+    """
     user = User.objects.get(user_secret=client_secret)
     context = {
         'user_id': user.user_id,
