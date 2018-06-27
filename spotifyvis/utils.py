@@ -122,11 +122,14 @@ def update_track_genres(user):
         # set genres to first artist's genres then find intersection with others
         shared_genres = track_artists.first().genres.all()
         for artist in track_artists:
-            shared_genres.intersection(artist.genres.all())
+            shared_genres = shared_genres.intersection(artist.genres.all())
+        shared_genres = shared_genres.order_by('-num_songs')
 
-        most_common_genre = shared_genres.order_by('-num_songs').first()
+        undefined_genre_obj = Genre.objects.get(name="undefined")
+        most_common_genre = shared_genres.first() if shared_genres.first() is \
+                not undefined_genre_obj else shared_genres[1]
         track.genre = most_common_genre if most_common_genre is not None \
-                else "undefined"
+                else undefined_genre_obj
         track.save()
         #  print(track.name, track.genre)
 
@@ -256,8 +259,9 @@ def get_artists_in_genre(user, genre, max_songs):
     :returns: dict of artists in the genre along with the number of songs they
     have. 
     """
+    genre_obj = Genre.objects.get(name=genre)
     artist_counts = (Artist.objects.filter(track__users=user)
-            .filter(track__genre=genre) 
+            .filter(genres=genre_obj) 
             .annotate(num_songs=Count('track', distinct=True))
             .order_by('-num_songs')
             )
