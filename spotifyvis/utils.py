@@ -14,7 +14,8 @@ import json
 USER_TRACKS_LIMIT = 50
 #  ARTIST_LIMIT = 50
 ARTIST_LIMIT = 25
-FEATURES_LIMIT = 100
+#  FEATURES_LIMIT = 100
+FEATURES_LIMIT = 25
 
 #  parse_library {{{ # 
 
@@ -33,61 +34,66 @@ def parse_library(headers, tracks, user):
     offset = 0
     payload = {'limit': str(USER_TRACKS_LIMIT)}
     artist_genre_queue = []
+    features_queue = []
 
     # iterate until hit requested num of tracks
     for _ in range(0, tracks, USER_TRACKS_LIMIT):
         payload['offset'] = str(offset)
-        # get current set of tracks
-        saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', headers=headers, params=payload).json()
+        saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
+                headers=headers,
+                params=payload).json()
 
-        # TODO: refactor the for loop body into helper function
-        # iterate through each track
         for track_dict in saved_tracks_response['items']:
+            #  add artists {{{ # 
+            
             # update artist info before track so that Track object can reference
             # Artist object
             track_artists = []
             for artist_dict in track_dict['track']['artists']:
                 artist_obj, artist_created = Artist.objects.get_or_create(
-                    artist_id=artist_dict['id'],
-                    name=artist_dict['name'],
-                    )
+                        artist_id=artist_dict['id'],
+                        name=artist_dict['name'],)
+                # only add/tally up artist genres if new
                 if artist_created:
                     artist_genre_queue.append(artist_obj)
                     if len(artist_genre_queue) == ARTIST_LIMIT:
                         add_artist_genres(headers, artist_genre_queue)
                         artist_genre_queue = []
-
-                #  update_artist_genre(headers, artist_obj)
-                # get_or_create() returns a tuple (obj, created)
                 track_artists.append(artist_obj)
             
-            #  top_genre = get_top_genre(headers,
-                    #  track_dict['track']['artists'][0]['id'])
+            #  }}} add artists # 
+            
+            # WIP: get most common genre
             top_genre = ""
             track_obj, track_created = save_track_obj(track_dict['track'], 
                     track_artists, top_genre, user)
 
-            # if a new track is not created, the associated audio feature does not need to be created again
-            #  if track_created:
-            save_audio_features(headers, track_dict['track']['id'], track_obj)
-            """
-            TODO: Put this logic in another function
-            # Audio analysis could be empty if not present in Spotify database
-            if len(audio_features_dict) != 0:
-                # Track the number of audio analyses for calculating
-                # audio feature averages and standard deviations on the fly
-                feature_data_points += 1
-                for feature, feature_data in audio_features_dict.items():
-                    update_audio_feature_stats(feature, feature_data, 
-                            feature_data_points, library_stats)
-            """
+            #  add audio features {{{ # 
+            
+            # if a new track is not created, the associated audio feature does
+            # not need to be created again
+            if track_created:
+                features_queue.append(track_obj)
+                if len(features_queue) == FEATURES_LIMIT:
+                    get_audio_features(headers, features_queue)
+                    features_queue = []
+            
+            #  }}} add audio features # 
+
         # calculates num_songs with offset + songs retrieved
         offset += USER_TRACKS_LIMIT
-    #  pprint.pprint(library_stats)
 
-    # update artists left in queue since there will be probably be leftover
-    # artists that didn't hit ARTIST_LIMIT
-    add_artist_genres(headers, artist_genre_queue)
+    #  clean-up {{{ # 
+    
+    # update remaining artists without genres and songs without features if
+    # there are any
+    if len(artist_genre_queue) > 0:
+        add_artist_genres(headers, artist_genre_queue)
+    if len(features_queue) > 0:
+        get_audio_features(headers, features_queue)
+    
+    #  }}} clean-up # 
+
     update_track_genres(user)
 
 #  }}} parse_library # 
@@ -118,6 +124,7 @@ def save_track_obj(track_dict, artists, top_genre, user):
     :artists: artists of the song, passed in as a list of Artist objects.
     :top_genre: top genre associated with this track (see get_top_genre).
     :user: User object for which this Track is to be associated with.
+
     :returns: (The created/retrieved Track object, created) 
 
     """
@@ -144,6 +151,33 @@ def save_track_obj(track_dict, artists, top_genre, user):
 
 #  }}} save_track_obj # 
 
+def get_audio_features(headers, track_objs):
+    """Creates and saves a new AudioFeatures objects for the respective
+    track_objs. track_objs should contain the API limit for a single call
+    (FEATURES_LIMIT) for maximum efficiency.
+
+    :headers: headers containing the API token
+    :track_objs: Track objects to associate with the new AudioFeatures object
+        
+    :returns: None
+    """
+    track_ids = str.join(",", [track_obj.track_id for track_obj in track_objs])
+    params = {'ids': track_ids}
+    features_response = requests.get("https://api.spotify.com/v1/audio-features",
+            headers=headers,params=params).json()['audio_features']
+    #  pprint.pprint(features_response)
+
+    useless_keys = [ "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature", ]
+    for i in range(len(track_objs)):
+        if features_response[i] is not None:
+            # Data that we don't need
+            cur_features_obj = AudioFeatures()
+            cur_features_obj.track = track_objs[i]
+            for key, val in features_response[i].items():
+                if key not in useless_keys:
+                    setattr(cur_features_obj, key, val)
+            cur_features_obj.save()
+
 #  get_audio_features {{{ # 
 
 def save_audio_features(headers, track_id, track):
@@ -157,8 +191,6 @@ def save_audio_features(headers, track_id, track):
     """
     
     response = requests.get("https://api.spotify.com/v1/audio-features/{}".format(track_id), headers = headers).json()
-    if track_id is '5S1IUPueD0xE0vj4zU3nSf':
-        pprint.pprint(response)
     if 'error' in response:
         return
 
@@ -383,10 +415,11 @@ def add_artist_genres(headers, artist_objs):
 
     """
     artist_ids = str.join(",", [artist_obj.artist_id for artist_obj in artist_objs])
-    #  print(len(artist_objs), artist_ids)
+    print(len(artist_objs), artist_ids)
     params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
             headers=headers, params=params).json()['artists']
+    #  pprint.pprint(artists_response)
     for i in range(len(artist_objs)):
         for genre in artists_response[i]['genres']:
             genre_obj, created = Genre.objects.get_or_create(name=genre,
