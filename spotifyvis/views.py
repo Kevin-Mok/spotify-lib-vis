@@ -161,6 +161,7 @@ def user_data(request):
     #  }}} create user obj # 
 
     context = {
+        'user_id': user.user_id,
         'user_secret': user.user_secret,
     }
 
@@ -169,21 +170,18 @@ def user_data(request):
 
 #  }}} user_data  # 
 
-#  test_db {{{ # 
-
-def test_db(request):
+def admin_graphs(request):
     """TODO
     """
     user_id = "polarbier"
     #  user_id = "chrisshyi13"
     user_obj = User.objects.get(user_id=user_id)
     context = {
+        'user_id': user_id,
         'user_secret': user_obj.user_secret,
     }
     update_track_genres(user_obj)
-    return render(request, 'spotifyvis/test_db.html', context)
-
-#  }}} test_db # 
+    return render(request, 'spotifyvis/logged_in.html', context)
 
 #  get_artist_data {{{ # 
 
@@ -198,6 +196,13 @@ def get_artist_data(request, user_secret):
     return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
+
+def display_genre_graph(request, client_secret):
+    user = User.objects.get(user_secret=client_secret)
+    context = {
+        'user_secret': client_secret,
+    }
+    return render(request, "spotifyvis/genre_graph.html", context)
 
 def audio_features(request, client_secret):
     user = User.objects.get(user_secret=client_secret)

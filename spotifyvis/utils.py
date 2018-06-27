@@ -63,7 +63,7 @@ def parse_library(headers, tracks, user):
             
             #  }}} add artists # 
             
-            # WIP: get most common genre
+            # TODO: fix this, don't need any more
             top_genre = ""
             track_obj, track_created = save_track_obj(track_dict['track'], 
                     track_artists, top_genre, user)
