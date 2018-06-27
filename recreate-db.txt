@@ -1,0 +1,8 @@
+# https://stackoverflow.com/a/34576062/8811872
+
+sudo su postgres
+psql
+drop database spotifyvis;
+create database spotifyvis with owner django;
+\q
+exit

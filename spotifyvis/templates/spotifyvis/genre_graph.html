@@ -1,0 +1,44 @@
+<!-- header {{{ -->
+
+<!DOC
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+	<!--[if gt IE 8]><!--> 
+{% load static %}
+<html class="no-js"> <!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Test DB Page</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{% static 'spotifyvis/css/dark_bg.css' %}">
+</head>
+
+<!-- }}} header -->
+
+<body>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
+  {% load static %}
+  <script src="{% static "spotifyvis/scripts/genre_graph.js" %}"></script>
+
+  <svg width="1920" height="740"></svg>
+  <script>
+    var svg = d3.select("svg"),
+        margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var x = d3.scaleBand()
+        .rangeRound([0, width])
+        .paddingInner(0.05)
+        .align(0.1);
+    var y = d3.scaleLinear()
+        .rangeRound([height, 0]);
+
+    d3.json("{% url "get_genre_data" user_secret %}").then(create_genre_graph);
+  </script>
+</body>
+</html>
