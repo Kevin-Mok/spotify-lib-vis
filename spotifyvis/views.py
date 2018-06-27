@@ -13,13 +13,13 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.db.models import Count, Q
-from .utils import parse_library, process_library_stats, get_artists_in_genre
+from .utils import parse_library, get_artists_in_genre, update_track_genres
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 100
+TRACKS_TO_QUERY = 200
 
 #  generate_random_string {{{ # 
 
@@ -41,7 +41,6 @@ def generate_random_string(length):
 #  }}} generate_random_string # 
 
 #  token_expired {{{ # 
-
 
 def token_expired(token_obtained_at, valid_for):
     """Returns True if token expired, False if otherwise
@@ -65,8 +64,8 @@ def index(request):
 
 #  login {{{ # 
 
+# uses Authorization Code flow
 def login(request):
-
     # use a randomly generated state string to prevent cross-site request forgery attacks
     state_str = generate_random_string(16)
     request.session['state_string'] = state_str 
@@ -119,6 +118,9 @@ def callback(request):
 #  user_data {{{ # 
 
 def user_data(request):
+
+    #  get user token {{{ # 
+    
     token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
     valid_for = int(request.session['valid_for'])
 
@@ -133,6 +135,8 @@ def user_data(request):
         refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data = req_body).json()
         request.session['access_token'] = refresh_token_response['access_token']
         request.session['valid_for'] = refresh_token_response['expires_in']
+    
+    #  }}} get user token # 
 
     auth_token_str = "Bearer " + request.session['access_token']
     headers = {
@@ -140,14 +144,18 @@ def user_data(request):
     }
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
-    request.session['user_id'] = user_data_response['id']  # store the user_id so it may be used to create model
-    #  request.session['user_name'] = user_data_response['display_name']
+    # store the user_id so it may be used to create model
+    request.session['user_id'] = user_data_response['id']  
 
+    #  create user obj {{{ # 
+    
     try:
         user = User.objects.get(user_id=user_data_response['id'])
     except User.DoesNotExist:
         user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
         user.save()
+    
+    #  }}} create user obj # 
 
     context = {
         'id': user_data_response['id'],
@@ -165,10 +173,12 @@ def test_db(request):
     """TODO
     """
     user_id = "polarbier"
+    user_obj = User.objects.get(user_id=user_id)
     #  user_id = "35kxo00qqo9pd1comj6ylxjq7"
     context = {
-        'user_secret': User.objects.get(user_id=user_id).user_secret,
+        'user_secret': user_obj.user_secret,
     }
+    update_track_genres(user_obj)
     return render(request, 'spotifyvis/test_db.html', context)
 
 #  }}} test_db # 
@@ -203,8 +213,11 @@ def get_audio_feature_data(request, audio_feature, client_secret):
         'data_points': [],
     }
     for track in user_tracks:
-        audio_feature_obj = AudioFeatures.objects.get(track=track)
-        response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+        try:
+            audio_feature_obj = AudioFeatures.objects.get(track=track)
+            response_payload['data_points'].append(getattr(audio_feature_obj, audio_feature))
+        except AudioFeatures.DoesNotExist:
+            continue
     return JsonResponse(response_payload)
 
 #  }}} get_audio_feature_data # 
@@ -224,6 +237,7 @@ def get_genre_data(request, user_secret):
     for genre_dict in genre_counts:
         genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'],
                 genre_dict['num_songs'])
+    print("*** Genre Breakdown ***")
     pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
 
