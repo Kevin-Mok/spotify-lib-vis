@@ -19,7 +19,7 @@ from .models import User, Track, AudioFeatures, Artist
 #  }}} imports # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 50
+TRACKS_TO_QUERY = 200
 
 #  generate_random_string {{{ # 
 
@@ -237,6 +237,7 @@ def get_genre_data(request, user_secret):
     for genre_dict in genre_counts:
         genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'],
                 genre_dict['num_songs'])
+    print("*** Genre Breakdown ***")
     pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
 

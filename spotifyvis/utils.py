@@ -12,10 +12,10 @@ import json
 #  }}} imports # 
 
 USER_TRACKS_LIMIT = 50
-#  ARTIST_LIMIT = 50
-ARTIST_LIMIT = 25
-#  FEATURES_LIMIT = 100
-FEATURES_LIMIT = 25
+ARTIST_LIMIT = 50
+FEATURES_LIMIT = 100
+#  ARTIST_LIMIT = 25
+#  FEATURES_LIMIT = 25
 
 #  parse_library {{{ # 
 
@@ -37,7 +37,7 @@ def parse_library(headers, tracks, user):
     features_queue = []
 
     # iterate until hit requested num of tracks
-    for _ in range(0, tracks, USER_TRACKS_LIMIT):
+    for i in range(0, tracks, USER_TRACKS_LIMIT):
         payload['offset'] = str(offset)
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
                 headers=headers,
@@ -80,6 +80,12 @@ def parse_library(headers, tracks, user):
             
             #  }}} add audio features # 
 
+            # temporary console logging
+            print("#{}-{}: {} - {}".format(offset + 1,
+                offset + USER_TRACKS_LIMIT, 
+                track_obj.artists.first(), 
+                track_obj.name))
+
         # calculates num_songs with offset + songs retrieved
         offset += USER_TRACKS_LIMIT
 
@@ -111,11 +117,18 @@ def update_track_genres(user):
     """
     user_tracks = Track.objects.filter(users__exact=user)
     for track in user_tracks:
-        track_artists = list(track.artists.all())
-        if len(track_artists) == 1:
-            track.genre = track_artists[0].genres.all().order_by('-num_songs').first()
-            track.save()
-            #  print(track_artists, track.genre)
+        # just using this variable to save another call to db
+        track_artists = track.artists.all()
+        # set genres to first artist's genres then find intersection with others
+        shared_genres = track_artists.first().genres.all()
+        for artist in track_artists:
+            shared_genres.intersection(artist.genres.all())
+
+        most_common_genre = shared_genres.order_by('-num_songs').first()
+        track.genre = most_common_genre if most_common_genre is not None \
+                else "undefined"
+        track.save()
+        #  print(track.name, track.genre)
 
 #  }}}  update_track_genres # 
 
@@ -186,23 +199,22 @@ def get_audio_features(headers, track_objs):
 
 #  }}} get_audio_features # 
 
-# WIP: is this being removed to redo genre data?
-def get_top_genre(headers, top_artist_id):
-    """Updates the top genre for a track by querying the Spotify API
+def process_artist_genre(genre_name, artist_obj):
+    """Increase count for correspoding Genre object to genre_name and add that
+    Genre to artist_obj. 
 
-    :headers: For making the API call.
-    :top_artist: The first artist's (listed in the track) Spotify ID.
-
-    :returns: The first genre listed for the top_artist.
+    :genre_name: Name of genre.
+    :artist_obj: Artist object to add Genre object to.
+    :returns: None
 
     """
-    artist_response = requests.get('https://api.spotify.com/v1/artists/' +
-            top_artist_id, headers=headers).json()
-    #  pprint.pprint(artist_response)
-    if len(artist_response['genres']) > 0:
-        return artist_response['genres'][0]
-    else:
-        return "undefined"
+    genre_obj, created = Genre.objects.get_or_create(name=genre_name,
+            defaults={'num_songs':1})
+    if not created:
+        genre_obj.num_songs = F('num_songs') + 1
+        genre_obj.save()
+    artist_obj.genres.add(genre_obj)
+    artist_obj.save()
 
 #  add_artist_genres {{{ # 
 
@@ -223,14 +235,11 @@ def add_artist_genres(headers, artist_objs):
             headers=headers, params=params).json()['artists']
     #  pprint.pprint(artists_response)
     for i in range(len(artist_objs)):
-        for genre in artists_response[i]['genres']:
-            genre_obj, created = Genre.objects.get_or_create(name=genre,
-                    defaults={'num_songs':1})
-            if not created:
-                genre_obj.num_songs = F('num_songs') +1
-                genre_obj.save()
-            artist_objs[i].genres.add(genre_obj)
-            artist_objs[i].save()
+        if len(artists_response[i]['genres']) == 0:
+            process_artist_genre("undefined", artist_objs[i])
+        else:
+            for genre in artists_response[i]['genres']:
+                process_artist_genre(genre, artist_objs[i])
 
 #  }}}  add_artist_genres # 
 
@@ -255,6 +264,8 @@ def get_artists_in_genre(user, genre, max_songs):
     processed_artist_counts = {}
     songs_added = 0
     for artist in artist_counts:
+        # hacky way to not have total count overflow due to there being multiple
+        # artists on a track
         if songs_added + artist.num_songs <= max_songs:
             processed_artist_counts[artist.name] = artist.num_songs
             songs_added += artist.num_songs
