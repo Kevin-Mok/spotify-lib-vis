@@ -13,7 +13,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.db.models import Count, Q
-from .utils import parse_library, process_library_stats, get_artists_in_genre, update_track_genres
+from .utils import parse_library, get_artists_in_genre, update_track_genres
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
@@ -41,7 +41,6 @@ def generate_random_string(length):
 #  }}} generate_random_string # 
 
 #  token_expired {{{ # 
-
 
 def token_expired(token_obtained_at, valid_for):
     """Returns True if token expired, False if otherwise
@@ -119,6 +118,9 @@ def callback(request):
 #  user_data {{{ # 
 
 def user_data(request):
+
+    #  get user token {{{ # 
+    
     token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
     valid_for = int(request.session['valid_for'])
 
@@ -133,6 +135,8 @@ def user_data(request):
         refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data = req_body).json()
         request.session['access_token'] = refresh_token_response['access_token']
         request.session['valid_for'] = refresh_token_response['expires_in']
+    
+    #  }}} get user token # 
 
     auth_token_str = "Bearer " + request.session['access_token']
     headers = {
@@ -140,14 +144,18 @@ def user_data(request):
     }
 
     user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
-    request.session['user_id'] = user_data_response['id']  # store the user_id so it may be used to create model
-    #  request.session['user_name'] = user_data_response['display_name']
+    # store the user_id so it may be used to create model
+    request.session['user_id'] = user_data_response['id']  
 
+    #  create user obj {{{ # 
+    
     try:
         user = User.objects.get(user_id=user_data_response['id'])
     except User.DoesNotExist:
         user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
         user.save()
+    
+    #  }}} create user obj # 
 
     context = {
         'id': user_data_response['id'],
