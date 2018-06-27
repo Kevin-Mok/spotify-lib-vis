@@ -3,9 +3,9 @@ db.sqlite3
 *.bak
 .idea/
 .vscode/*
+*/migrations/*
 
 api-keys.sh
 Pipfile
-super-pass.txt
-*.js
-*.ini
+*.txt
+graph.js
