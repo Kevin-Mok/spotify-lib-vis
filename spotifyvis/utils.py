@@ -20,7 +20,7 @@ FEATURES_LIMIT = 100
 #  parse_library {{{ # 
 
 def parse_library(headers, tracks, user):
-    """Scans user's library for certain number of tracks to update library_stats with.
+    """Scans user's library for certain number of tracks and store the information in a database
 
     :headers: For API call.
     :tracks: Number of tracks to get from user's library.

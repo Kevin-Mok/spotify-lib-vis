@@ -5,7 +5,7 @@ import random
 import requests
 import os
 import urllib
-import json
+import secrets
 import pprint
 import string
 from datetime import datetime
@@ -117,6 +117,7 @@ def callback(request):
 
 #  user_data {{{ # 
 
+
 def user_data(request):
 
     #  get user token {{{ # 
@@ -132,7 +133,7 @@ def user_data(request):
             'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
         }
         
-        refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data = req_body).json()
+        refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data=req_body).json()
         request.session['access_token'] = refresh_token_response['access_token']
         request.session['valid_for'] = refresh_token_response['expires_in']
     
@@ -152,18 +153,19 @@ def user_data(request):
     try:
         user = User.objects.get(user_id=user_data_response['id'])
     except User.DoesNotExist:
-        user = User(user_id=user_data_response['id'], user_secret=generate_random_string(30))
+        # Python docs recommends 32 bytes of randomness against brute force attacks
+        user = User(user_id=user_data_response['id'], user_secret=secrets.token_urlsafe(32))
+        request.session['user_secret'] = user.user_secret
         user.save()
     
     #  }}} create user obj # 
 
     context = {
-        'id': user_data_response['id'],
         'user_secret': user.user_secret,
     }
 
     parse_library(headers, TRACKS_TO_QUERY, user)
-    return render(request, 'spotifyvis/user_data.html', context)
+    return render(request, 'spotifyvis/logged_in.html', context)
 
 #  }}} user_data  # 
 
@@ -173,8 +175,8 @@ def test_db(request):
     """TODO
     """
     user_id = "polarbier"
+    #  user_id = "chrisshyi13"
     user_obj = User.objects.get(user_id=user_id)
-    #  user_id = "35kxo00qqo9pd1comj6ylxjq7"
     context = {
         'user_secret': user_obj.user_secret,
     }
@@ -196,6 +198,14 @@ def get_artist_data(request, user_secret):
     return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
+
+def audio_features(request, client_secret):
+    user = User.objects.get(user_secret=client_secret)
+    context = {
+        'user_id': user.user_id,
+        'user_secret': client_secret,
+    }
+    return render(request, "spotifyvis/audio_features.html", context)
 
 #  get_audio_feature_data {{{ # 
 
