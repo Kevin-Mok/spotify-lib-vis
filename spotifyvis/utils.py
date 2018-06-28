@@ -11,7 +11,10 @@ import json
 
 #  }}} imports # 
 
-#  API limits {{{ # 
+#  global vars {{{ # 
+
+console_logging = True
+#  console_logging = False
 
 USER_TRACKS_LIMIT = 50
 ARTIST_LIMIT = 50
@@ -19,7 +22,7 @@ FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
 
-#  }}} API limits # 
+#  }}} global vars # 
 
 #  parse_library {{{ # 
 
@@ -83,11 +86,11 @@ def parse_library(headers, num_tracks, user):
             
             #  }}} add audio features # 
 
-            # console logging
-            print("Added track #{}-{}: {} - {}".format(offset + 1,
-                offset + USER_TRACKS_LIMIT, 
-                track_obj.artists.first(), 
-                track_obj.name))
+            if console_logging:
+                print("Added track #{}-{}: {} - {}".format(offset + 1,
+                    offset + USER_TRACKS_LIMIT, 
+                    track_obj.artists.first(), 
+                    track_obj.name))
 
         # calculates num_songs with offset + songs retrieved
         offset += USER_TRACKS_LIMIT
@@ -135,8 +138,8 @@ def update_track_genres(user):
                 else undefined_genre_obj
         track.save()
         
-        # console logging
-        print("Added '{}' as genre for song '{}'".format(track.genre, track.name))
+        if console_logging:
+            print("Added '{}' as genre for song '{}'".format(track.genre, track.name))
 
 #  }}}  update_track_genres # 
 
@@ -204,9 +207,9 @@ def get_audio_features(headers, track_objs):
                     setattr(cur_features_obj, key, val)
             cur_features_obj.save()
 
-            # console logging
-            print("Added features for song #{} - {}".format(i + 1,
-                track_objs[i].name))
+            if console_logging:
+                print("Added features for song #{} - {}".format(i + 1,
+                    track_objs[i].name))
 
 #  }}} get_audio_features # 
 
@@ -255,9 +258,9 @@ def add_artist_genres(headers, artist_objs):
             for genre in artists_response[i]['genres']:
                 process_artist_genre(genre, artist_objs[i])
 
-        # console logging
-        print("Added genres for artist #{} - {}".format(i + 1,
-            artist_objs[i].name))
+        if console_logging:
+            print("Added genres for artist #{} - {}".format(i + 1,
+                artist_objs[i].name))
 
 #  }}}  add_artist_genres # 
 
