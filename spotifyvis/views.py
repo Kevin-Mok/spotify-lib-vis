@@ -18,8 +18,12 @@ from .models import User, Track, AudioFeatures, Artist
 
 #  }}} imports # 
 
+#  global vars {{{ # 
+
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 200
+
+#  }}} global vars # 
 
 #  generate_random_string {{{ # 
 
@@ -66,7 +70,8 @@ def index(request):
 
 # uses Authorization Code flow
 def login(request):
-    # use a randomly generated state string to prevent cross-site request forgery attacks
+    # use a randomly generated state string to prevent cross-site request
+    # forgery attacks
     state_str = generate_random_string(16)
     request.session['state_string'] = state_str 
 
@@ -79,7 +84,8 @@ def login(request):
         'show_dialog': False
     }
 
-    params = urllib.parse.urlencode(payload) # turn the payload dict into a query string
+    # turn the payload dict into a query string
+    params = urllib.parse.urlencode(payload) 
     authorize_url = "https://accounts.spotify.com/authorize/?{}".format(params)
     return redirect(authorize_url)
 
@@ -170,8 +176,10 @@ def user_data(request):
 
 #  }}} user_data  # 
 
+#  admin_graphs {{{ # 
+
 def admin_graphs(request):
-    """TODO
+    """Redirect to logged in page as ourselves. For testing purposes.
     """
     user_id = "polarbier"
     #  user_id = "chrisshyi13"
@@ -182,6 +190,8 @@ def admin_graphs(request):
     }
     update_track_genres(user_obj)
     return render(request, 'spotifyvis/logged_in.html', context)
+
+#  }}} admin_graphs  # 
 
 #  get_artist_data {{{ # 
 
@@ -197,12 +207,18 @@ def get_artist_data(request, user_secret):
 
 #  }}} get_artist_data # 
 
+#  display_genre_graph {{{ # 
+
 def display_genre_graph(request, client_secret):
     user = User.objects.get(user_secret=client_secret)
     context = {
         'user_secret': client_secret,
     }
     return render(request, "spotifyvis/genre_graph.html", context)
+
+#  }}}  display_genre_graph # 
+
+#  audio_features graph {{{ # 
 
 def audio_features(request, client_secret):
     user = User.objects.get(user_secret=client_secret)
@@ -211,6 +227,8 @@ def audio_features(request, client_secret):
         'user_secret': client_secret,
     }
     return render(request, "spotifyvis/audio_features.html", context)
+
+#  }}} audio_features graph # 
 
 #  get_audio_feature_data {{{ # 
 

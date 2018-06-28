@@ -11,11 +11,15 @@ import json
 
 #  }}} imports # 
 
+#  API limits {{{ # 
+
 USER_TRACKS_LIMIT = 50
 ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
+
+#  }}} API limits # 
 
 #  parse_library {{{ # 
 
@@ -63,10 +67,8 @@ def parse_library(headers, tracks, user):
             
             #  }}} add artists # 
             
-            # TODO: fix this, don't need any more
-            top_genre = ""
             track_obj, track_created = save_track_obj(track_dict['track'], 
-                    track_artists, top_genre, user)
+                    track_artists, user)
 
             #  add audio features {{{ # 
             
@@ -80,8 +82,8 @@ def parse_library(headers, tracks, user):
             
             #  }}} add audio features # 
 
-            # temporary console logging
-            print("#{}-{}: {} - {}".format(offset + 1,
+            # console logging
+            print("Added track #{}-{}: {} - {}".format(offset + 1,
                 offset + USER_TRACKS_LIMIT, 
                 track_obj.artists.first(), 
                 track_obj.name))
@@ -131,13 +133,15 @@ def update_track_genres(user):
         track.genre = most_common_genre if most_common_genre is not None \
                 else undefined_genre_obj
         track.save()
-        #  print(track.name, track.genre)
+        
+        # console logging
+        print("Added '{}' as genre for song '{}'".format(track.genre, track.name))
 
 #  }}}  update_track_genres # 
 
 #  save_track_obj {{{ # 
 
-def save_track_obj(track_dict, artists, top_genre, user):
+def save_track_obj(track_dict, artists, user):
     """Make an entry in the database for this track if it doesn't exist already.
 
     :track_dict: dictionary from the API call containing track information.
@@ -158,7 +162,6 @@ def save_track_obj(track_dict, artists, top_genre, user):
             popularity=int(track_dict['popularity']),
             runtime=int(float(track_dict['duration_ms']) / 1000),
             name=track_dict['name'],
-            #  genre=top_genre,
             )
 
         # have to add artists and user after saving object since track needs to
@@ -200,7 +203,13 @@ def get_audio_features(headers, track_objs):
                     setattr(cur_features_obj, key, val)
             cur_features_obj.save()
 
+            # console logging
+            print("Added features for song #{} - {}".format(i + 1,
+                track_objs[i].name))
+
 #  }}} get_audio_features # 
+
+#  process_artist_genre {{{ # 
 
 def process_artist_genre(genre_name, artist_obj):
     """Increase count for correspoding Genre object to genre_name and add that
@@ -219,6 +228,8 @@ def process_artist_genre(genre_name, artist_obj):
     artist_obj.genres.add(genre_obj)
     artist_obj.save()
 
+#  }}} process_artist_genre # 
+
 #  add_artist_genres {{{ # 
 
 def add_artist_genres(headers, artist_objs):
@@ -236,13 +247,16 @@ def add_artist_genres(headers, artist_objs):
     params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
             headers=headers, params=params).json()['artists']
-    #  pprint.pprint(artists_response)
     for i in range(len(artist_objs)):
         if len(artists_response[i]['genres']) == 0:
             process_artist_genre("undefined", artist_objs[i])
         else:
             for genre in artists_response[i]['genres']:
                 process_artist_genre(genre, artist_objs[i])
+
+        # console logging
+        print("Added genres for artist #{} - {}".format(i + 1,
+            artist_objs[i].name))
 
 #  }}}  add_artist_genres # 
 

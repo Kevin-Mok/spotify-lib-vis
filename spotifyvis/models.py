@@ -28,8 +28,7 @@ class Artist(models.Model):
         verbose_name_plural = "Artists"
 
     artist_id = models.CharField(primary_key=True, max_length=MAX_ID)
-    # unique since only storing one genre per artist right now
-    name = models.CharField(unique=True, max_length=50)
+    name = models.CharField(max_length=50)
     genres = models.ManyToManyField(Genre, blank=True)
 
     def __str__(self):
