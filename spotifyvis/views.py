@@ -21,8 +21,8 @@ from .models import User, Track, AudioFeatures, Artist
 #  global vars {{{ # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-#  TRACKS_TO_QUERY = 200
-TRACKS_TO_QUERY = 0
+TRACKS_TO_QUERY = 200
+#  TRACKS_TO_QUERY = 0
 
 #  }}} global vars # 
 
@@ -157,13 +157,19 @@ def user_data(request):
 
     #  create user obj {{{ # 
     
+    total_songs = requests.get('https://api.spotify.com/v1/me/tracks', 
+            headers=headers,
+            params={'limit': '1'}).json()['total']
     try:
         user = User.objects.get(user_id=user_data_response['id'])
     except User.DoesNotExist:
         # Python docs recommends 32 bytes of randomness against brute force attacks
-        user = User(user_id=user_data_response['id'], user_secret=secrets.token_urlsafe(32))
+        user = User.objects.create(
+                user_id=user_data_response['id'],
+                user_secret=secrets.token_urlsafe(32),
+                total_songs=total_songs,
+                )
         request.session['user_secret'] = user.user_secret
-        user.save()
     
     #  }}} create user obj # 
 
@@ -189,7 +195,6 @@ def admin_graphs(request):
         'user_id': user_id,
         'user_secret': user_obj.user_secret,
     }
-    update_track_genres(user_obj)
     return render(request, 'spotifyvis/logged_in.html', context)
 
 #  }}} admin_graphs  # 

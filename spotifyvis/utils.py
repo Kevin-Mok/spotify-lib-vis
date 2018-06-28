@@ -191,9 +191,10 @@ def get_audio_features(headers, track_objs):
     :returns: None
     """
     track_ids = str.join(",", [track_obj.track_id for track_obj in track_objs])
-    params = {'ids': track_ids}
     features_response = requests.get("https://api.spotify.com/v1/audio-features",
-            headers=headers,params=params).json()['audio_features']
+            headers=headers,
+            params={'ids': track_ids}
+            ).json()['audio_features']
     #  pprint.pprint(features_response)
 
     useless_keys = [ "key", "mode", "type", "liveness", "id", "uri", "track_href", "analysis_url", "time_signature", ]
@@ -248,9 +249,10 @@ def add_artist_genres(headers, artist_objs):
 
     """
     artist_ids = str.join(",", [artist_obj.artist_id for artist_obj in artist_objs])
-    params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
-            headers=headers, params=params).json()['artists']
+            headers=headers, 
+            params={'ids': artist_ids},
+            ).json()['artists']
     for i in range(len(artist_objs)):
         if len(artists_response[i]['genres']) == 0:
             process_artist_genre("undefined", artist_objs[i])

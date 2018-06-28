@@ -45,6 +45,7 @@ class User(models.Model):
 
     user_id = models.CharField(primary_key=True, max_length=MAX_ID) # the user's Spotify ID
     user_secret = models.CharField(max_length=50, default='')
+    total_songs = models.PositiveIntegerField()
 
     def __str__(self):
         return self.user_id
