@@ -21,7 +21,8 @@ from .models import User, Track, AudioFeatures, Artist
 #  global vars {{{ # 
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
-TRACKS_TO_QUERY = 200
+#  TRACKS_TO_QUERY = 200
+TRACKS_TO_QUERY = 0
 
 #  }}} global vars # 
 

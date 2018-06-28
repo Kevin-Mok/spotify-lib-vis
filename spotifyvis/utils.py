@@ -23,31 +23,32 @@ FEATURES_LIMIT = 100
 
 #  parse_library {{{ # 
 
-def parse_library(headers, tracks, user):
-    """Scans user's library for certain number of tracks and store the information in a database
+def parse_library(headers, num_tracks, user):
+    """Scans user's library for num_tracks and store the information in a database
 
     :headers: For API call.
-    :tracks: Number of tracks to get from user's library.
+    :num_tracks: Number of tracks to get from user's library (0 scans the entire
+    library).
     :user: a User object representing the user whose library we are parsing
 
     :returns: None
 
     """
-    #  TODO: implement importing entire library with 0 as tracks param
-    # keeps track of point to get songs from
     offset = 0
     payload = {'limit': str(USER_TRACKS_LIMIT)}
     artist_genre_queue = []
     features_queue = []
 
-    # iterate until hit requested num of tracks
-    for i in range(0, tracks, USER_TRACKS_LIMIT):
+    # create this obj so loop runs at least once
+    saved_tracks_response = [0]
+    # scan until reach num_tracks or no tracks left if scanning entire library
+    while (num_tracks == 0 or offset < num_tracks) and len(saved_tracks_response) > 0:
         payload['offset'] = str(offset)
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
                 headers=headers,
-                params=payload).json()
+                params=payload).json()['items']
 
-        for track_dict in saved_tracks_response['items']:
+        for track_dict in saved_tracks_response:
             #  add artists {{{ # 
             
             # update artist info before track so that Track object can reference
