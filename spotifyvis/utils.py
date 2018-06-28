@@ -13,14 +13,16 @@ import json
 
 #  global vars {{{ # 
 
-console_logging = True
-#  console_logging = False
-
 USER_TRACKS_LIMIT = 50
 ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
+
+console_logging = True
+#  console_logging = False
+artists_genre_processed = 0
+features_processed = 0
 
 #  }}} global vars # 
 
@@ -50,6 +52,9 @@ def parse_library(headers, num_tracks, user):
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
                 headers=headers,
                 params=payload).json()['items']
+
+        if console_logging:
+            tracks_processed = 0
 
         for track_dict in saved_tracks_response:
             #  add artists {{{ # 
@@ -87,10 +92,12 @@ def parse_library(headers, num_tracks, user):
             #  }}} add audio features # 
 
             if console_logging:
-                print("Added track #{}-{}: {} - {}".format(offset + 1,
-                    offset + USER_TRACKS_LIMIT, 
+                tracks_processed += 1
+                print("Added track #{}: {} - {}".format(
+                    offset + tracks_processed,
                     track_obj.artists.first(), 
-                    track_obj.name))
+                    track_obj.name,
+                    ))
 
         # calculates num_songs with offset + songs retrieved
         offset += USER_TRACKS_LIMIT
@@ -121,6 +128,7 @@ def update_track_genres(user):
     :returns: None
 
     """
+    tracks_processed = 0
     user_tracks = Track.objects.filter(users__exact=user)
     for track in user_tracks:
         # just using this variable to save another call to db
@@ -137,9 +145,14 @@ def update_track_genres(user):
         track.genre = most_common_genre if most_common_genre is not None \
                 else undefined_genre_obj
         track.save()
+        tracks_processed += 1
         
         if console_logging:
-            print("Added '{}' as genre for song '{}'".format(track.genre, track.name))
+            print("Added '{}' as genre for song #{} - '{}'".format(
+                track.genre, 
+                tracks_processed,
+                track.name,
+                ))
 
 #  }}}  update_track_genres # 
 
@@ -190,6 +203,7 @@ def get_audio_features(headers, track_objs):
         
     :returns: None
     """
+
     track_ids = str.join(",", [track_obj.track_id for track_obj in track_objs])
     features_response = requests.get("https://api.spotify.com/v1/audio-features",
             headers=headers,
@@ -209,8 +223,10 @@ def get_audio_features(headers, track_objs):
             cur_features_obj.save()
 
             if console_logging:
-                print("Added features for song #{} - {}".format(i + 1,
-                    track_objs[i].name))
+                global features_processed 
+                features_processed += 1
+                print("Added features for song #{} - {}".format(
+                    features_processed, track_objs[i].name))
 
 #  }}} get_audio_features # 
 
@@ -248,6 +264,7 @@ def add_artist_genres(headers, artist_objs):
     :returns: None
 
     """
+
     artist_ids = str.join(",", [artist_obj.artist_id for artist_obj in artist_objs])
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
             headers=headers, 
@@ -261,8 +278,10 @@ def add_artist_genres(headers, artist_objs):
                 process_artist_genre(genre, artist_objs[i])
 
         if console_logging:
-            print("Added genres for artist #{} - {}".format(i + 1,
-                artist_objs[i].name))
+            global artists_genre_processed 
+            artists_genre_processed += 1
+            print("Added genres for artist #{} - {}".format(
+                artists_genre_processed, artist_objs[i].name))
 
 #  }}}  add_artist_genres # 
 
