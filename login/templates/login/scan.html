@@ -10,12 +10,16 @@
         <title>User Spotify Data</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="stylesheet" href="{% static 'spotifyvis/css/dark_bg.css' %}">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+		<link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
     </head>
     <body>
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ id }}</p>
+        <h1>Logged in as {{ user_id }}</h1>
+		<a href="{% url "api:scan" user_secret %}" class="btn btn-primary">
+			Scan Library
+		</a>
     </body>
 </html>

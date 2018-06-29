@@ -1,0 +1,3 @@
+DROP DATABASE spotifyvis;
+CREATE DATABASE spotifyvis;
+GRANT ALL PRIVILEGES ON DATABASE spotifyvis TO django;

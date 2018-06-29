@@ -4,7 +4,7 @@
   <head>
     <title>User Login</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'spotifyvis/css/dark_bg.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
     <style type="text/css">
       .text-overflow {
         overflow: hidden;
@@ -20,12 +20,9 @@
     <div class="container">
       <div id="login">
         <h1>spotify-lib-vis</h1>
-        <a href="/login" class="btn btn-primary">Scan Library</a>
-		<a href="{% url "admin_graphs" %}" class="btn btn-primary">Admin Graphs</a>
+        <a href="{% url 'login:spotify_login' %}" class="btn btn-primary">Login</a>
+		<a href="{% url 'login:admin_graphs' %}" class="btn btn-primary">Admin Graphs</a>
       </div>
     </div>
-
-
-    <script src="{% static 'spotifyvis/scripts/index.js' %}"></script>
   </body>
 </html>

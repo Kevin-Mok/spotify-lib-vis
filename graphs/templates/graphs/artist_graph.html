@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Artist Graphs</title>
+</head>
+<body>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="{% static "graphs/scripts/artist_graph.js" %}"></script>
+    <script>
+		d3.json("{% url "api:get_artist_data" user_secret %}").then(function(data) {
+            for (let index = 0; index < data.length; index++) {
+                console.log(data[index].name);
+                console.log(data[index].num_songs);
+            }
+            // this is the data format needed for bubble charts
+            data = {
+                "children": data
+            };
+            drawArtistGraph(data, "body");
+        });
+    </script>
+
+</body>
+</html>

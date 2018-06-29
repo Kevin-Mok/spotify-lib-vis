@@ -1,6 +1,0 @@
-sudo -u postgres psql
-drop database spotifyvis;
-create database spotifyvis with owner django;
-
-\q
-exit

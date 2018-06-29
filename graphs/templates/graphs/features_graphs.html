@@ -20,7 +20,6 @@
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ user_id }}</p>
         <script src="https://d3js.org/d3.v5.js"></script>
         <script type="text/javascript">
 
@@ -37,6 +36,7 @@
              *  @return None
              */
             function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem) {
+                // TODO: Not hard code the dimensions?
                 let margin = {top: 20, right: 30, bottom: 30, left: 40};
                 let width = 480 - margin.left - margin.right,
                     height = 270 - margin.top - margin.bottom;
@@ -50,7 +50,7 @@
                 // define the vertical scaling function
                 let vScale = d3.scaleLinear().range([height, 0]);
 
-                d3.json(`/audio_features/${audioFeature}/{{ user_secret }}`)
+                d3.json(`/api/audio_features/${audioFeature}/{{ user_secret }}`)
                     .then(function(response) {
                     // categorize the data points
                     for (let dataPoint of response.data_points) {
