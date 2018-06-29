@@ -11,13 +11,9 @@
     <script src="{% static "spotifyvis/scripts/artist_graph.js" %}"></script>
     <script>
         d3.json("{% url "get_artist_data" user_secret %}").then(function(data) {
-            for (let index = 0; index < data.length; index++) {
-                console.log(data[index].name);
-                console.log(data[index].num_songs);
-            }
             // this is the data format needed for bubble charts
             data = {
-                "children": data
+                children: data
             };
             drawArtistGraph(data, "body");
         });
