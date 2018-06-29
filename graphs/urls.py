@@ -2,6 +2,7 @@ from django.urls import path, include
 
 from .views import *
 
+app_name = 'graphs'
 urlpatterns = [
     path('artists/<str:user_secret>', artist_data, 
         name='display_artist_graph'),

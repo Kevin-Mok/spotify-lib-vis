@@ -12,6 +12,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
+from .models import *
 
 #  }}} imports # 
 
@@ -55,14 +56,16 @@ def token_expired(token_obtained_at, valid_for):
 
 # Create your views here.
 def index(request):
-    return render(request, 'spotifyvis/index.html')
+    return render(request, 'login/index.html')
 
 #  }}}  index # 
 
-#  login {{{ # 
+#  spotify_login {{{ # 
 
-# uses Authorization Code flow
 def spotify_login(request):
+    """ Step 1 in authorization flow: Have your application request
+    authorization; the user logs in and authorizes access.
+    """
     # use a randomly generated state string to prevent cross-site request forgery attacks
     state_str = generate_random_string(16)
     request.session['state_string'] = state_str 
@@ -70,7 +73,7 @@ def spotify_login(request):
     payload = {
         'client_id': os.environ['SPOTIFY_CLIENT_ID'],
         'response_type': 'code',
-        'redirect_uri': 'http://localhost:8000/callback',
+        'redirect_uri': 'http://localhost:8000/login/callback',
         'state': state_str,
         'scope': 'user-library-read',
         'show_dialog': False
@@ -80,11 +83,12 @@ def spotify_login(request):
     authorize_url = "https://accounts.spotify.com/authorize/?{}".format(params)
     return redirect(authorize_url)
 
-#  }}} login # 
-
-#  callback {{{ # 
+#  }}} spotify_login # 
 
 def callback(request):
+    """ Step 2 in authorization flow: Have your application request refresh and
+    access tokens; Spotify returns access and refresh tokens. 
+    """
     # Attempt to retrieve the authorization code from the query string
     try:
         code = request.GET['code']
@@ -94,78 +98,76 @@ def callback(request):
     payload = {
         'grant_type': 'authorization_code',
         'code': code,
-        'redirect_uri': 'http://localhost:8000/callback',
+        'redirect_uri': 'http://localhost:8000/login/callback',
         'client_id': os.environ['SPOTIFY_CLIENT_ID'],
         'client_secret': os.environ['SPOTIFY_CLIENT_SECRET'],
     }
 
-    response = requests.post('https://accounts.spotify.com/api/token', data=payload).json()
-    # despite its name, datetime.today() returns a datetime object, not a date object
-    # use datetime.strptime() to get a datetime object from a string
-    request.session['token_obtained_at'] = datetime.strftime(datetime.today(), TIME_FORMAT) 
-    request.session['access_token'] = response['access_token']
-    request.session['refresh_token'] = response['refresh_token']
-    request.session['valid_for'] = response['expires_in']
-    #  print(response)
+    token_response = requests.post('https://accounts.spotify.com/api/token', data=payload).json()
+    user_obj = create_user(token_response['refresh_token'],
+            token_response['access_token'],
+            token_response['expires_in']) 
 
-    return redirect('user_data')
+    context = { 
+            'user_id': user_obj.id, 
+            'user_secret': user_obj.secret, 
+            }
+    return render(request, 'login/scan.html', context)
+    #  return redirect('user/' + user_obj.secret)
 
-#  }}} callback # 
 
-#  user_data {{{ # 
+def create_user(refresh_token, access_token, access_expires_in):
+    """Create a User object based on information returned from Step 2 (callback
+    function) of auth flow.
 
-def user_data(request):
+    :refresh_token: Used to renew access tokens.
+    :access_token: Used in Spotify API calls.
+    :access_expires_in: How long the access token last in seconds.
 
-    #  get user token {{{ # 
-    
-    token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
-    valid_for = int(request.session['valid_for'])
+    :returns: The newly created User object.
 
-    if token_expired(token_obtained_at, valid_for):
-        req_body = {
-            'grant_type': 'refresh_token',
-            'refresh_token': request.session['refresh_token'],
-            'client_id': os.environ['SPOTIFY_CLIENT_ID'],
-            'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
-        }
-        
-        refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data=req_body).json()
-        request.session['access_token'] = refresh_token_response['access_token']
-        request.session['valid_for'] = refresh_token_response['expires_in']
-    
-    #  }}} get user token # 
+    """
+    profile_response = requests.get('https://api.spotify.com/v1/me',
+            headers={'Authorization': "Bearer " + access_token}).json()
+    user_id = profile_response['id']
 
-    auth_token_str = "Bearer " + request.session['access_token']
-    headers = {
-        'Authorization': auth_token_str
-    }
-
-    user_data_response = requests.get('https://api.spotify.com/v1/me', headers = headers).json()
-    # store the user_id so it may be used to create model
-    request.session['user_id'] = user_data_response['id']  
-
-    #  create user obj {{{ # 
-    
     try:
-        user = User.objects.get(user_id=user_data_response['id'])
+        user_obj = User.objects.get(id=user_id)
     except User.DoesNotExist:
-        # Python docs recommends 32 bytes of randomness against brute force attacks
-        user = User(user_id=user_data_response['id'], user_secret=secrets.token_urlsafe(32))
-        request.session['user_secret'] = user.user_secret
-        user.save()
-    
-    #  }}} create user obj # 
+        # Python docs recommends 32 bytes of randomness against brute
+        # force attacks
+        user_obj = User.objects.create(
+                id=user_id,
+                secret=secrets.token_urlsafe(32),
+                refresh_token=refresh_token,
+                access_token=access_token,
+                access_expires_in=access_expires_in,
+                )
 
-    context = {
-        'user_id': user.user_id,
-        'user_secret': user.user_secret,
+    return user_obj
+
+#  refresh access token {{{ # 
+
+"""
+token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
+valid_for = int(request.session['valid_for'])
+
+if token_expired(token_obtained_at, valid_for):
+    req_body = {
+        'grant_type': 'refresh_token',
+        'refresh_token': request.session['refresh_token'],
+        'client_id': os.environ['SPOTIFY_CLIENT_ID'],
+        'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
     }
+    
+    refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data=req_body).json()
+    request.session['access_token'] = refresh_token_response['access_token']
+    request.session['valid_for'] = refresh_token_response['expires_in']
+"""
 
-    # TODO: redirect to API app to parse library or loading page
-    #  parse_library(headers, TRACKS_TO_QUERY, user)
-    return render(request, 'spotifyvis/logged_in.html', context)
+#  }}} refresh access token # 
 
-#  }}} user_data  # 
+#  admin_graphs {{{ # 
 
 def admin_graphs(request):
     """TODO
@@ -178,4 +180,6 @@ def admin_graphs(request):
         'user_secret': user_obj.user_secret,
     }
     update_track_genres(user_obj)
-    return render(request, 'spotifyvis/logged_in.html', context)
+    return render(request, 'login/logged_in.html', context)
+
+#  }}} admin_graphs  # 

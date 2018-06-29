@@ -1,4 +1,5 @@
 from django.db import models
+from login.models import User
 
 # id's are 22 in length in examples but set to 30 for buffer
 MAX_ID = 30
@@ -36,21 +37,6 @@ class Artist(models.Model):
         return self.name
 
 #  }}} Artist # 
-
-#  User {{{ # 
-
-class User(models.Model):
-    class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
-
-    user_id = models.CharField(primary_key=True, max_length=MAX_ID) # the user's Spotify ID
-    user_secret = models.CharField(max_length=50, default='')
-
-    def __str__(self):
-        return self.user_id
-
-#  }}} User # 
 
 #  Track {{{ # 
 

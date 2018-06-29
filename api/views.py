@@ -12,12 +12,99 @@ from datetime import datetime
 
 from django.http import JsonResponse
 from django.db.models import Count, Q
-from .utils import parse_library, get_artists_in_genre, update_track_genres
+from .utils import get_artists_in_genre, update_track_genres
 from .models import User, Track, AudioFeatures, Artist 
 
 #  }}} imports # 
 
 TRACKS_TO_QUERY = 200
+
+#  parse_library {{{ # 
+
+def parse_library(headers, tracks, user):
+    """Scans user's library for certain number of tracks and store the information in a database
+
+    :headers: For API call.
+    :tracks: Number of tracks to get from user's library.
+    :user: a User object representing the user whose library we are parsing
+
+    :returns: None
+
+    """
+    #  TODO: implement importing entire library with 0 as tracks param
+    # keeps track of point to get songs from
+    offset = 0
+    payload = {'limit': str(USER_TRACKS_LIMIT)}
+    artist_genre_queue = []
+    features_queue = []
+
+    # iterate until hit requested num of tracks
+    for i in range(0, tracks, USER_TRACKS_LIMIT):
+        payload['offset'] = str(offset)
+        saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
+                headers=headers,
+                params=payload).json()
+
+        for track_dict in saved_tracks_response['items']:
+            #  add artists {{{ # 
+            
+            # update artist info before track so that Track object can reference
+            # Artist object
+            track_artists = []
+            for artist_dict in track_dict['track']['artists']:
+                artist_obj, artist_created = Artist.objects.get_or_create(
+                        artist_id=artist_dict['id'],
+                        name=artist_dict['name'],)
+                # only add/tally up artist genres if new
+                if artist_created:
+                    artist_genre_queue.append(artist_obj)
+                    if len(artist_genre_queue) == ARTIST_LIMIT:
+                        add_artist_genres(headers, artist_genre_queue)
+                        artist_genre_queue = []
+                track_artists.append(artist_obj)
+            
+            #  }}} add artists # 
+            
+            # TODO: fix this, don't need any more
+            top_genre = ""
+            track_obj, track_created = save_track_obj(track_dict['track'], 
+                    track_artists, top_genre, user)
+
+            #  add audio features {{{ # 
+            
+            # if a new track is not created, the associated audio feature does
+            # not need to be created again
+            if track_created:
+                features_queue.append(track_obj)
+                if len(features_queue) == FEATURES_LIMIT:
+                    get_audio_features(headers, features_queue)
+                    features_queue = []
+            
+            #  }}} add audio features # 
+
+            # temporary console logging
+            print("#{}-{}: {} - {}".format(offset + 1,
+                offset + USER_TRACKS_LIMIT, 
+                track_obj.artists.first(), 
+                track_obj.name))
+
+        # calculates num_songs with offset + songs retrieved
+        offset += USER_TRACKS_LIMIT
+
+    #  clean-up {{{ # 
+    
+    # update remaining artists without genres and songs without features if
+    # there are any
+    if len(artist_genre_queue) > 0:
+        add_artist_genres(headers, artist_genre_queue)
+    if len(features_queue) > 0:
+        get_audio_features(headers, features_queue)
+    
+    #  }}} clean-up # 
+
+    update_track_genres(user)
+
+#  }}} parse_library # 
 
 #  get_artist_data {{{ # 
 
