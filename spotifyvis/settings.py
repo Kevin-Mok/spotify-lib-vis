@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'spotifyvis.apps.SpotifyvisConfig',
+    'login.apps.LoginConfig',
+    'api.apps.ApiConfig',
+    'graphs.apps.GraphsConfig',
 ]
 
 MIDDLEWARE = [
@@ -50,7 +52,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'musicvis.urls'
+ROOT_URLCONF = 'spotifyvis.urls'
 
 TEMPLATES = [
     {
@@ -68,7 +70,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'musicvis.wsgi.application'
+WSGI_APPLICATION = 'spotifyvis.wsgi.application'
 
 
 # Database
