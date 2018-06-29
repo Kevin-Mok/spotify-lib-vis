@@ -14,6 +14,7 @@ from django.db.models import Count, Q
 from .utils import *
 from .models import *
 from login.models import User
+from login.utils import get_user_context
 
 #  }}} imports # 
 
@@ -22,7 +23,7 @@ ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
-TRACKS_TO_QUERY = 200
+TRACKS_TO_QUERY = 100
 
 console_logging = True
 
@@ -114,16 +115,11 @@ def parse_library(request, user_secret):
 
     update_track_genres(user_obj)
 
-    context = { 
-            'user_id': user_obj.id, 
-            'user_secret': user_obj.secret, 
-            }
-    return render(request, 'api/logged_in.html', context)
+    return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 
 #  }}} parse_library # 
 
 #  get_artist_data {{{ # 
-
 
 def get_artist_data(request, user_secret):
     """Returns artist data as a JSON serialized list of dictionaries
@@ -133,11 +129,12 @@ def get_artist_data(request, user_secret):
     :param user_secret: the user secret used for identification
     :return: a JsonResponse
     """
-    user = User.objects.get(user_secret=user_secret)
+    user = User.objects.get(secret=user_secret)
     artist_counts = Artist.objects.annotate(num_songs=Count('track',
-                                            filter=Q(track__users=user)))
-    processed_artist_counts = [{'name': artist.name,
-                                'num_songs': artist.num_songs} for artist in artist_counts]
+        filter=Q(track__users=user)))
+    processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} 
+            for artist in artist_counts]
+    pprint.pprint(processed_artist_counts)
     return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
@@ -152,7 +149,7 @@ def get_audio_feature_data(request, audio_feature, user_secret):
         audio_feature: The audio feature to be queried
         user_secret: client secret, used to identify the user
     """
-    user = User.objects.get(user_secret=user_secret)
+    user = User.objects.get(secret=user_secret)
     user_tracks = Track.objects.filter(users=user)
     response_payload = {
         'data_points': [],
@@ -173,7 +170,7 @@ def get_genre_data(request, user_secret):
     """Return genre data needed to create the graph user.
     TODO
     """
-    user = User.objects.get(user_secret=user_secret)
+    user = User.objects.get(secret=user_secret)
     genre_counts = (Track.objects.filter(users__exact=user)
             .values('genre')
             .order_by('genre')

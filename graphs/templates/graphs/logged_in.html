@@ -9,11 +9,11 @@
 </head>
 <body>
 	<h1>{{ user_id }}'s Graphs</h1>
-	<a class="btn btn-primary" href=""
+	<a class="btn btn-primary" href="{% url "graphs:display_audio_features" user_secret %}"
 		role="button">Audio Features</a>
-    <a class="btn btn-primary" href=""
+    <a class="btn btn-primary" href="{% url "graphs:display_genre_graph" user_secret %}"
 		role="button">Genres</a>
-    <a class="btn btn-primary" href="" role="button">
+    <a class="btn btn-primary" href="{% url "graphs:display_artist_graph" user_secret %}" role="button">
         Artists
     </a>
 </body>

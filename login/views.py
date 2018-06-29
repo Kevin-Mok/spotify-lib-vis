@@ -13,6 +13,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 from .models import *
+from .utils import *
 
 #  }}} imports # 
 
@@ -94,11 +95,7 @@ def callback(request):
             token_response['access_token'],
             token_response['expires_in']) 
 
-    context = { 
-            'user_id': user_obj.id, 
-            'user_secret': user_obj.secret, 
-            }
-    return render(request, 'login/scan.html', context)
+    return render(request, 'login/scan.html', get_user_context(user_obj))
     #  return redirect('user/' + user_obj.secret)
 
 
@@ -139,12 +136,7 @@ def admin_graphs(request):
     """
     user_id = "polarbier"
     #  user_id = "chrisshyi13"
-    user_obj = User.objects.get(user_id=user_id)
-    context = {
-        'user_id': user_id,
-        'user_secret': user_obj.user_secret,
-    }
-    update_track_genres(user_obj)
-    return render(request, 'login/logged_in.html', context)
+    user_obj = User.objects.get(id=user_id)
+    return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 
 #  }}} admin_graphs  # 
