@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Artist Graphs</title>
+</head>
+<body>
+    <p>Logged in as {{ user_id }}</p>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="{% static "spotifyvis/scripts/artist_graph.js" %}"></script>
+    <script>
+        d3.json("{% url "get_artist_data" user_secret %}").then(function(data) {
+            // this is the data format needed for bubble charts
+            data = {
+                children: data
+            };
+            drawArtistGraph(data, "body");
+        });
+    </script>
+
+</body>
+</html>

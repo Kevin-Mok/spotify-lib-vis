@@ -183,46 +183,75 @@ def admin_graphs(request):
     update_track_genres(user_obj)
     return render(request, 'spotifyvis/logged_in.html', context)
 
+
+def artist_data(request, user_secret):
+    """Renders the artist data graph display page
+
+    :param request: the HTTP request
+    :param user_secret: the user secret used for identification
+    :return: render the artist data graph display page
+    """
+    user = User.objects.get(user_secret=user_secret)
+    context = {
+        'user_id': user.user_id,
+        'user_secret': user_secret,
+    }
+    return render(request, "spotifyvis/artist_graph.html", context)
+
 #  get_artist_data {{{ # 
 
+
 def get_artist_data(request, user_secret):
-    """TODO
+    """Returns artist data as a JSON serialized list of dictionaries
+    The (key, value) pairs are (artist name, song count for said artist)
+
+    :param request: the HTTP request
+    :param user_secret: the user secret used for identification
+    :return: a JsonResponse
     """
-    user = User.objects.get(user_id=user_secret)
+    user = User.objects.get(user_secret=user_secret)
     artist_counts = Artist.objects.annotate(num_songs=Count('track',
-        filter=Q(track__users=user)))
+                                            filter=Q(track__users=user)))
     processed_artist_counts = [{'name': artist.name,
-        'num_songs': artist.num_songs} for artist in artist_counts]
+                                'num_songs': artist.num_songs} for artist in artist_counts]
     return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
 
-def display_genre_graph(request, client_secret):
-    user = User.objects.get(user_secret=client_secret)
+
+def display_genre_graph(request, user_secret):
+    user = User.objects.get(user_secret=user_secret)
     context = {
-        'user_secret': client_secret,
+        'user_secret': user_secret,
     }
     return render(request, "spotifyvis/genre_graph.html", context)
 
-def audio_features(request, client_secret):
-    user = User.objects.get(user_secret=client_secret)
+
+def audio_features(request, user_secret):
+    """Renders the audio features page
+
+    :param request: the HTTP request
+    :param user_secret: user secret used for identification
+    :return: renders the audio features page
+    """
+    user = User.objects.get(user_secret=user_secret)
     context = {
         'user_id': user.user_id,
-        'user_secret': client_secret,
+        'user_secret': user_secret,
     }
     return render(request, "spotifyvis/audio_features.html", context)
 
 #  get_audio_feature_data {{{ # 
 
-def get_audio_feature_data(request, audio_feature, client_secret):
+def get_audio_feature_data(request, audio_feature, user_secret):
     """Returns all data points for a given audio feature
 
     Args:
         request: the HTTP request
         audio_feature: The audio feature to be queried
-        client_secret: client secret, used to identify the user
+        user_secret: client secret, used to identify the user
     """
-    user = User.objects.get(user_secret=client_secret)
+    user = User.objects.get(user_secret=user_secret)
     user_tracks = Track.objects.filter(users=user)
     response_payload = {
         'data_points': [],
