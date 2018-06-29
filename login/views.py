@@ -38,20 +38,6 @@ def generate_random_string(length):
 
 #  }}} generate_random_string # 
 
-#  token_expired {{{ # 
-
-def token_expired(token_obtained_at, valid_for):
-    """Returns True if token expired, False if otherwise
-
-    Args:
-        token_obtained_at: datetime object representing the date and time when the token was obtained
-        valid_for: the time duration for which the token is valid, in seconds
-    """
-    time_elapsed = (datetime.today() - token_obtained_at).total_seconds()
-    return time_elapsed >= valid_for
-
-#  }}} token_expired # 
-
 #  index {{{ # 
 
 # Create your views here.
@@ -145,27 +131,6 @@ def create_user(refresh_token, access_token, access_expires_in):
                 )
 
     return user_obj
-
-#  refresh access token {{{ # 
-
-"""
-token_obtained_at = datetime.strptime(request.session['token_obtained_at'], TIME_FORMAT)
-valid_for = int(request.session['valid_for'])
-
-if token_expired(token_obtained_at, valid_for):
-    req_body = {
-        'grant_type': 'refresh_token',
-        'refresh_token': request.session['refresh_token'],
-        'client_id': os.environ['SPOTIFY_CLIENT_ID'],
-        'client_secret': os.environ['SPOTIFY_CLIENT_SECRET']
-    }
-    
-    refresh_token_response = requests.post('https://accounts.spotify.com/api/token', data=req_body).json()
-    request.session['access_token'] = refresh_token_response['access_token']
-    request.session['valid_for'] = refresh_token_response['expires_in']
-"""
-
-#  }}} refresh access token # 
 
 #  admin_graphs {{{ # 
 

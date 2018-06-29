@@ -3,49 +3,59 @@
 import math
 import random
 import requests
-import os
 import urllib
 import secrets
 import pprint
 import string
-from datetime import datetime
 
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db.models import Count, Q
-from .utils import get_artists_in_genre, update_track_genres
-from .models import User, Track, AudioFeatures, Artist 
+from .utils import *
+from .models import *
+from login.models import User
 
 #  }}} imports # 
 
+USER_TRACKS_LIMIT = 50
+ARTIST_LIMIT = 50
+FEATURES_LIMIT = 100
+#  ARTIST_LIMIT = 25
+#  FEATURES_LIMIT = 25
 TRACKS_TO_QUERY = 200
+
+console_logging = True
 
 #  parse_library {{{ # 
 
-def parse_library(headers, tracks, user):
-    """Scans user's library for certain number of tracks and store the information in a database
+def parse_library(request, user_secret):
+    """Scans user's library for num_tracks and store the information in a
+    database.
 
-    :headers: For API call.
-    :tracks: Number of tracks to get from user's library.
-    :user: a User object representing the user whose library we are parsing
-
+    :user_secret: secret for User object who's library is being scanned.
     :returns: None
-
     """
-    #  TODO: implement importing entire library with 0 as tracks param
-    # keeps track of point to get songs from
+
     offset = 0
     payload = {'limit': str(USER_TRACKS_LIMIT)}
     artist_genre_queue = []
     features_queue = []
+    user_obj = User.objects.get(secret=user_secret)
+    user_headers = get_user_header(user_obj)
 
-    # iterate until hit requested num of tracks
-    for i in range(0, tracks, USER_TRACKS_LIMIT):
+    # create this obj so loop runs at least once
+    saved_tracks_response = [0]
+    # scan until reach num_tracks or no tracks left if scanning entire library
+    while (TRACKS_TO_QUERY == 0 or offset < TRACKS_TO_QUERY) and len(saved_tracks_response) > 0:
         payload['offset'] = str(offset)
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
-                headers=headers,
-                params=payload).json()
+                headers=user_headers,
+                params=payload).json()['items']
 
-        for track_dict in saved_tracks_response['items']:
+        if console_logging:
+            tracks_processed = 0
+
+        for track_dict in saved_tracks_response:
             #  add artists {{{ # 
             
             # update artist info before track so that Track object can reference
@@ -53,22 +63,20 @@ def parse_library(headers, tracks, user):
             track_artists = []
             for artist_dict in track_dict['track']['artists']:
                 artist_obj, artist_created = Artist.objects.get_or_create(
-                        artist_id=artist_dict['id'],
+                        id=artist_dict['id'],
                         name=artist_dict['name'],)
                 # only add/tally up artist genres if new
                 if artist_created:
                     artist_genre_queue.append(artist_obj)
                     if len(artist_genre_queue) == ARTIST_LIMIT:
-                        add_artist_genres(headers, artist_genre_queue)
+                        add_artist_genres(user_headers, artist_genre_queue)
                         artist_genre_queue = []
                 track_artists.append(artist_obj)
             
             #  }}} add artists # 
             
-            # TODO: fix this, don't need any more
-            top_genre = ""
             track_obj, track_created = save_track_obj(track_dict['track'], 
-                    track_artists, top_genre, user)
+                    track_artists, user_obj)
 
             #  add audio features {{{ # 
             
@@ -77,16 +85,18 @@ def parse_library(headers, tracks, user):
             if track_created:
                 features_queue.append(track_obj)
                 if len(features_queue) == FEATURES_LIMIT:
-                    get_audio_features(headers, features_queue)
+                    get_audio_features(user_headers, features_queue)
                     features_queue = []
             
             #  }}} add audio features # 
 
-            # temporary console logging
-            print("#{}-{}: {} - {}".format(offset + 1,
-                offset + USER_TRACKS_LIMIT, 
-                track_obj.artists.first(), 
-                track_obj.name))
+            if console_logging:
+                tracks_processed += 1
+                print("Added track #{}: {} - {}".format(
+                    offset + tracks_processed,
+                    track_obj.artists.first(), 
+                    track_obj.name,
+                    ))
 
         # calculates num_songs with offset + songs retrieved
         offset += USER_TRACKS_LIMIT
@@ -96,13 +106,19 @@ def parse_library(headers, tracks, user):
     # update remaining artists without genres and songs without features if
     # there are any
     if len(artist_genre_queue) > 0:
-        add_artist_genres(headers, artist_genre_queue)
+        add_artist_genres(user_headers, artist_genre_queue)
     if len(features_queue) > 0:
-        get_audio_features(headers, features_queue)
+        get_audio_features(user_headers, features_queue)
     
     #  }}} clean-up # 
 
-    update_track_genres(user)
+    update_track_genres(user_obj)
+
+    context = { 
+            'user_id': user_obj.id, 
+            'user_secret': user_obj.secret, 
+            }
+    return render(request, 'api/logged_in.html', context)
 
 #  }}} parse_library # 
 

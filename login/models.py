@@ -15,8 +15,8 @@ class User(models.Model):
     secret = models.CharField(max_length=50, default='')
     refresh_token = models.CharField(max_length=TOKEN_LENGTH)
     access_token = models.CharField(max_length=TOKEN_LENGTH)
-    access_obtained_at = models.DateTimeField(auto_now_add=True)
+    access_obtained_at = models.DateTimeField(auto_now=True)
     access_expires_in = models.PositiveIntegerField()
 
     def __str__(self):
-        return self.user_id
+        return self.id
