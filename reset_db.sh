@@ -7,7 +7,7 @@
 # if $INVENV is 1, then in virtualenv
 # echo $INVENV
 # if [ $INVENV -eq 1 ]; then
-rm login/migrations/0* api/migrations/0* graphs/migrations/0*
+rm login/migrations/0* api/migrations/0*
 sudo -u postgres psql -f reset_db.sql 
 python manage.py makemigrations
 python manage.py migrate 

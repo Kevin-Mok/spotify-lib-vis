@@ -5,13 +5,25 @@
  */
 function drawArtistGraph(artistData, parentElem) {
     let margin = {top: 20, right: 30, bottom: 30, left: 40};
-    let width = 960 - margin.right - margin.left;
-    let height = 540 - margin.top - margin.bottom;
+    let width = 1000 - margin.right - margin.left;
+    let height = 1000 - margin.top - margin.bottom;
 
     let color = d3.scaleOrdinal(d3.schemeCategory10);
+    /*
+    ** Next four variables were part of an attempt to make bubbles larger,
+    ** didn't work
+     */
+    let songCounts = artistData.children.map(function(artist) { return artist.num_songs; }); // array of counts
+    let songCountExtent = d3.extent(songCounts); // [min song count, max song count]
+    let circleSize = {
+        min: 45,
+        max: 75
+    };
+    let circleRadiusScale = d3.scaleSqrt().domain(songCountExtent).range([circleSize.min, circleSize.max]);
+
     let bubble = d3.pack(artistData)
-        .size([width, height])
-        .padding(1.5);
+        .size([width + 100, height + 100])
+        .padding(0.2);
 
     let svg = d3.select(parentElem)
         .append("svg")
@@ -23,7 +35,7 @@ function drawArtistGraph(artistData, parentElem) {
         .sum(function(d) { return d.num_songs; });
 
     let node = svg.selectAll(".node")
-        .data(bubble(nodes).descendants())
+        .data(bubble(nodes).leaves())
         .enter()
         .filter(function(d) {
             return !d.children;
@@ -36,7 +48,7 @@ function drawArtistGraph(artistData, parentElem) {
 
     node.append("title")
         .text(function(d) {
-            return `${d.name}: ${d.num_songs}`;
+            return d.data.name + ": " + d.data.num_songs;
         });
 
     node.append("circle")
