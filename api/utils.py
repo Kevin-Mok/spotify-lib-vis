@@ -170,7 +170,7 @@ def add_artist_genres(headers, artist_objs):
     params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
             headers=headers, 
-            params={'ids': artist_ids},
+            params=params,
             ).json()['artists']
     for i in range(len(artist_objs)):
         if len(artists_response[i]['genres']) == 0:
