@@ -20,9 +20,9 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
     let featureData = {};
     let currentEndPoint = intervalEndPoints.begin; // start at beginning
     // Create the keys first in order
-    while (currentEndPoint !== intervalEndPoints.end) {
+    while (currentEndPoint < intervalEndPoints.end) {
         let startOfRange = currentEndPoint;
-        let endOfRange = startOfRange + intervalEndPoints.step;
+        let endOfRange = precise(startOfRange + intervalEndPoints.step);
 
         let key = `${startOfRange} ~ ${endOfRange}`;
         featureData[key] = 0;
@@ -40,13 +40,14 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
         // categorize the data points
         for (let dataPoint of response.data_points) {
             dataPoint = parseFloat(dataPoint);
-            let currLowerBound = intervalEndPoints.end - intervalEndPoints.step;
+            let currLowerBound = precise(intervalEndPoints.end - intervalEndPoints.step);
             let stepSize = intervalEndPoints.step;
             // find the index of the first element greater than dataPoint
-            while (dataPoint < currLowerBound) {
-                currLowerBound -= stepSize;
+            while (dataPoint < currLowerBound && currLowerBound >= intervalEndPoints.begin) {
+                currLowerBound = precise(currLowerBound - stepSize);
             }
-            let upperBound = currLowerBound + stepSize;
+            let upperBound = precise(currLowerBound + stepSize);
+            currLowerBound = precise(currLowerBound);
             let key = `${currLowerBound} ~ ${upperBound}`;
             featureData[key] += 1;
         }
@@ -113,4 +114,13 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
  */
 function capFeatureStr(audioFeature) {
     return audioFeature.charAt(0).toUpperCase() + audioFeature.slice(1);
+}
+
+/**
+ * Converts a number to a floating point value with 2 significant figures
+ * @param number: the number to be converted
+ * @returns the input converted to two significant digits
+ */
+function precise(number) {
+    return Number.parseFloat(number.toPrecision(2));
 }
