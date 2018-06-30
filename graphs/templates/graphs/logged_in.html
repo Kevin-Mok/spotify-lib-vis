@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <title>Logged In</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="{% static 'spotifyvis/css/dark_bg.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
 </head>
 <body>
 	<h1>{{ user_id }}'s Graphs</h1>
-	<a class="btn btn-primary" href="{% url "display_audio_features" user_secret %}"
+	<a class="btn btn-primary" href="{% url "graphs:display_audio_features" user_secret %}"
 		role="button">Audio Features</a>
-    <a class="btn btn-primary" href="{% url "display_genre_graph" user_secret %}"
+    <a class="btn btn-primary" href="{% url "graphs:display_genre_graph" user_secret %}"
 		role="button">Genres</a>
-    <a class="btn btn-primary" href="{% url "display_artist_graph" user_secret %}" role="button">
+    <a class="btn btn-primary" href="{% url "graphs:display_artist_graph" user_secret %}" role="button">
         Artists
     </a>
 </body>

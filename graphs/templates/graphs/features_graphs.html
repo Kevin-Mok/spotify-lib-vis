@@ -20,9 +20,8 @@
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-        <p>Logged in as {{ user_id }}</p>
         <script src="https://d3js.org/d3.v5.js"></script>
-        <script src="{% static "spotifyvis/scripts/audio_feat_graph.js" %}"></script>
+        <script src="{% static "graphs/scripts/audio_feat_graph.js" %}"></script>
         <script type="text/javascript">
             let userSecret = "{{ user_secret }}";
             drawAudioFeatGraph("instrumentalness", [0, 0.25, 0.5, 0.75, 1.0], 'body', userSecret);

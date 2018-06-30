@@ -13,7 +13,7 @@
 	<title>Test DB Page</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'spotifyvis/css/dark_bg.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
 </head>
 
 <!-- }}} header -->
@@ -22,7 +22,7 @@
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
   {% load static %}
-  <script src="{% static "spotifyvis/scripts/genre_graph.js" %}"></script>
+  <script src="{% static "graphs/scripts/genre_graph.js" %}"></script>
 
   <svg width="1920" height="740"></svg>
   <script>
@@ -38,7 +38,7 @@
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-    d3.json("{% url "get_genre_data" user_secret %}").then(create_genre_graph);
+    d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
   </script>
 </body>
 </html>

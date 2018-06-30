@@ -1,4 +1,5 @@
 from django.db import models
+from login.models import User
 
 # id's are 22 in length in examples but set to 30 for buffer
 MAX_ID = 30
@@ -21,36 +22,19 @@ class Genre(models.Model):
 
 #  Artist {{{ # 
 
-
 class Artist(models.Model):
     class Meta:
         verbose_name = "Artist"
         verbose_name_plural = "Artists"
 
-    artist_id = models.CharField(primary_key=True, max_length=MAX_ID)
-    # unique since only storing one genre per artist right now
-    name = models.CharField(unique=True, max_length=50)
+    id = models.CharField(primary_key=True, max_length=MAX_ID)
+    name = models.CharField(max_length=50)
     genres = models.ManyToManyField(Genre, blank=True)
 
     def __str__(self):
         return self.name
 
 #  }}} Artist # 
-
-#  User {{{ # 
-
-class User(models.Model):
-    class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
-
-    user_id = models.CharField(primary_key=True, max_length=MAX_ID) # the user's Spotify ID
-    user_secret = models.CharField(max_length=50, default='')
-
-    def __str__(self):
-        return self.user_id
-
-#  }}} User # 
 
 #  Track {{{ # 
 
@@ -60,7 +44,7 @@ class Track(models.Model):
         verbose_name = "Track"
         verbose_name_plural = "Tracks"
 
-    track_id = models.CharField(primary_key=True, max_length=MAX_ID)
+    id = models.CharField(primary_key=True, max_length=MAX_ID)
     #  artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
     artists = models.ManyToManyField(Artist, blank=True)
     year = models.PositiveSmallIntegerField()
