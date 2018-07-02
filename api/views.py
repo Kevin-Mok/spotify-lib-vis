@@ -56,6 +56,7 @@ def parse_library(request, user_secret):
         if console_logging:
             tracks_processed = 0
 
+        tracks_processed = 0
         for track_dict in saved_tracks_response:
             #  add artists {{{ # 
             
@@ -103,7 +104,7 @@ def parse_library(request, user_secret):
         offset += USER_TRACKS_LIMIT
 
     #  clean-up {{{ # 
-    
+
     # update remaining artists without genres and songs without features if
     # there are any
     if len(artist_genre_queue) > 0:
