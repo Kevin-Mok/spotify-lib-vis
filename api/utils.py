@@ -135,11 +135,11 @@ def get_audio_features(headers, track_objs):
 #  process_artist_genre {{{ # 
 
 def process_artist_genre(genre_name, artist_obj):
-    """Increase count for correspoding Genre object to genre_name and add that
-    Genre to artist_obj. 
+    """Increase count for corresponding Genre object to genre_name and associate that
+    Genre object with artist_obj.
 
     :genre_name: Name of genre.
-    :artist_obj: Artist object to add Genre object to.
+    :artist_obj: Artist object to associate Genre object with
     :returns: None
 
     """
@@ -167,10 +167,9 @@ def add_artist_genres(headers, artist_objs):
 
     """
     artist_ids = str.join(",", [artist_obj.id for artist_obj in artist_objs])
-    params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
             headers=headers, 
-            params=params,
+            params={'ids': artist_ids},
             ).json()['artists']
     for i in range(len(artist_objs)):
         if len(artists_response[i]['genres']) == 0:
