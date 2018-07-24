@@ -26,16 +26,16 @@
 
   <svg width="1920" height="740"></svg>
   <script>
-    var svg = d3.select("svg"),
+    let svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom,
         g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    var x = d3.scaleBand()
+    let x = d3.scaleBand()
         .rangeRound([0, width])
         .paddingInner(0.05)
         .align(0.1);
-    var y = d3.scaleLinear()
+    let y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
     d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);

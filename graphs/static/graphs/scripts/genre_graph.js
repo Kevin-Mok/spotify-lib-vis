@@ -4,7 +4,7 @@ function create_genre_graph(data) {
     data.forEach(function(d) {
         d.num_songs = +d.num_songs;
         console.log(d.genre, d.num_songs);
-        var artist_names = Object.keys(d.artists);
+        let artist_names = Object.keys(d.artists);
         artist_names.forEach(function(e) {
             d.artists[e] = +d.artists[e];
             console.log(e, d.artists[e]);
@@ -31,22 +31,22 @@ function create_genre_graph(data) {
 
     // setup bar colors {{{ //
     
-    var max_artists = d3.max(data, function(d) {
+    let max_artists = d3.max(data, function(d) {
         return Object.keys(d.artists).length;
     });
-    var z = d3.scaleOrdinal().range(randomColor({
+    let z = d3.scaleOrdinal().range(randomColor({
         count: max_artists,
         luminosity: 'light',
     }));
     
     // }}} setup bar colors //
 
-    for (var genre_dict of data) {
+    for (let genre_dict of data) {
 		
         // process artist breakdown  {{{ //
         
-        var keys = Object.keys(genre_dict.artists);
-        var stack = d3.stack()
+        let keys = Object.keys(genre_dict.artists);
+        let stack = d3.stack()
             //.order(d3.stackOrderAscending)
             .order(d3.stackOrderDescending)
             .keys(keys)([genre_dict.artists])
@@ -112,7 +112,7 @@ function create_genre_graph(data) {
 // https://gist.github.com/guypursey/f47d8cd11a8ff24854305505dbbd8c07#file-index-html
 function wrap(text, width) {
     text.each(function() {
-        var text = d3.select(this),
+        let text = d3.select(this),
 			words = text.text().split(/\s+/).reverse(),
             word,
             line = [],

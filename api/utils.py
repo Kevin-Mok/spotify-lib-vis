@@ -11,6 +11,8 @@ from django.core import serializers
 from django.utils import timezone
 from .models import *
 from login.models import User
+from django.db.models import FloatField
+from django.db.models.functions import Cast
 
 #  }}} imports # 
 
@@ -34,16 +36,13 @@ def update_track_genres(user_obj):
     user_tracks = Track.objects.filter(users__exact=user_obj)
     for track in user_tracks:
         # just using this variable to save another call to db
-        track_artists = track.artists.all()
-        # set genres to first artist's genres then find intersection with others
-        shared_genres = track_artists.first().genres.all()
-        for artist in track_artists:
-            shared_genres = shared_genres.intersection(artist.genres.all())
-        shared_genres = shared_genres.order_by('-num_songs')
+        track_artists = list(track.artists.all())
+        # TODO: Use the most popular genre of the first artist as the Track genre
+        first_artist_genres = track_artists[0].genres.all().order_by('-num_songs')
 
         undefined_genre_obj = Genre.objects.get(name="undefined")
-        most_common_genre = shared_genres.first() if shared_genres.first() is \
-                not undefined_genre_obj else shared_genres[1]
+        most_common_genre = first_artist_genres.first() if first_artist_genres.first() is \
+                not undefined_genre_obj else first_artist_genres[1]
         track.genre = most_common_genre if most_common_genre is not None \
                 else undefined_genre_obj
         track.save()
@@ -143,8 +142,7 @@ def process_artist_genre(genre_name, artist_obj):
     :returns: None
 
     """
-    genre_obj, created = Genre.objects.get_or_create(name=genre_name,
-            defaults={'num_songs':1})
+    genre_obj, created = Genre.objects.get_or_create(name=genre_name, defaults={'num_songs': 1})
     if not created:
         genre_obj.num_songs = F('num_songs') + 1
         genre_obj.save()
@@ -192,7 +190,7 @@ def get_artists_in_genre(user, genre, max_songs):
     """Return count of artists in genre.
 
     :user: User object to return data for.
-    :genre: genre to count artists for.
+    :genre: genre to count artists for. (string)
     :max_songs: max total songs to include to prevent overflow due to having
     multiple artists on each track.
 
@@ -200,19 +198,22 @@ def get_artists_in_genre(user, genre, max_songs):
     have. 
     """
     genre_obj = Genre.objects.get(name=genre)
-    artist_counts = (Artist.objects.filter(track__users=user)
-            .filter(genres=genre_obj) 
-            .annotate(num_songs=Count('track', distinct=True))
-            .order_by('-num_songs')
-            )
+    tracks_in_genre = Track.objects.filter(genre=genre_obj, users=user)
+    track_count = tracks_in_genre.count()
+    user_artists = Artist.objects.filter(track__users=user)  # use this variable to save on db queries
+    total_artist_counts = tracks_in_genre.aggregate(counts=Count('artists'))['counts']
+
     processed_artist_counts = {}
-    songs_added = 0
-    for artist in artist_counts:
+    # songs_added = 0
+    for artist in user_artists:
         # hacky way to not have total count overflow due to there being multiple
         # artists on a track
-        if songs_added + artist.num_songs <= max_songs:
-            processed_artist_counts[artist.name] = artist.num_songs
-            songs_added += artist.num_songs
+        # if songs_added + artist.num_songs <= max_songs:
+        #     processed_artist_counts[artist.name] = artist.num_songs
+        #     songs_added += artist.num_songs
+        processed_artist_counts[artist.name] = round(artist.track_set
+                                                     .filter(genre=genre_obj, users=user)
+                                                     .count() * track_count / total_artist_counts, 2)
     #  processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
     #  processed_artist_counts = {artist.name: artist.num_songs for artist in artist_counts}
     #  pprint.pprint(processed_artist_counts)

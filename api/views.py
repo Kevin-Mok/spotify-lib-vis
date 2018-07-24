@@ -81,7 +81,7 @@ def parse_library(request, user_secret):
                     track_artists, user_obj)
 
             #  add audio features {{{ # 
-            
+
             # if a new track is not created, the associated audio feature does
             # not need to be created again
             if track_created:
@@ -174,13 +174,12 @@ def get_genre_data(request, user_secret):
     """
     user = User.objects.get(secret=user_secret)
     genre_counts = (Track.objects.filter(users__exact=user)
-            .values('genre')
-            .order_by('genre')
-            .annotate(num_songs=Count('genre'))
-            )
+                    .values('genre')
+                    .order_by('genre')
+                    .annotate(num_songs=Count('genre'))
+                    )
     for genre_dict in genre_counts:
-        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'],
-                genre_dict['num_songs'])
+        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'], genre_dict['num_songs'])
     print("*** Genre Breakdown ***")
     pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
