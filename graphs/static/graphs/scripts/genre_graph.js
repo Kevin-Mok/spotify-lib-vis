@@ -22,9 +22,9 @@ function create_genre_graph(data) {
     x.domain(data.map(function(d) {
         return d.genre;
     }));
-    //y.domain([0, d3.max(data, function(d) { return d.num_songs; }) * 1.25]).nice();
+    // y.domain([0, d3.max(data, function(d) { return d.num_songs; }) * 1.25]).nice();
     y.domain([0, d3.max(data, function(d) {
-        return d.num_songs;
+        return d.num_songs; // returns the maximum number of songs in the genre
     })]).nice();
 	
 	// }}} domains  //
@@ -34,7 +34,7 @@ function create_genre_graph(data) {
     let max_artists = d3.max(data, function(d) {
         return Object.keys(d.artists).length;
     });
-    let z = d3.scaleOrdinal().range(randomColor({
+    let colorScale = d3.scaleOrdinal().range(randomColor({
         count: max_artists,
         luminosity: 'light',
     }));
@@ -47,10 +47,9 @@ function create_genre_graph(data) {
         
         let keys = Object.keys(genre_dict.artists);
         let stack = d3.stack()
-            //.order(d3.stackOrderAscending)
             .order(d3.stackOrderDescending)
             .keys(keys)([genre_dict.artists])
-            //unpack the column
+            // unpack the column
             .map((d, i) => {
                 return {
                     key: keys[i],
@@ -72,8 +71,9 @@ function create_genre_graph(data) {
             })
             .attr("height", d => y(d.data[0]) - y(d.data[1]))
             .attr("width", x.bandwidth())
-            .attr('fill', (d, i) => z(i))
-            .append('title').text(d => d.key + ': ' + (d.data[1] - d.data[0]));
+            .attr('fill', (d, i) => colorScale(i))
+            // keep 3 significant figures in the song count label
+            .append('title').text(d => d.key + ': ' + (d.data[1] - d.data[0]).toPrecision(3));
         
         // }}} add bars //
 
@@ -108,7 +108,7 @@ function create_genre_graph(data) {
 }
 
 // wrap text {{{ //
-
+// wrapping long labels
 // https://gist.github.com/guypursey/f47d8cd11a8ff24854305505dbbd8c07#file-index-html
 function wrap(text, width) {
     text.each(function() {
@@ -122,13 +122,13 @@ function wrap(text, width) {
             dy = parseFloat(text.attr("dy")),
             tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em")
         while (word = words.pop()) {
-            line.push(word)
-            tspan.text(line.join(" "))
+            line.push(word);
+            tspan.text(line.join(" "));
             if (tspan.node().getComputedTextLength() > width) {
-                line.pop()
-                tspan.text(line.join(" "))
-                line = [word]
-                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word)
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word);
             }
         }
     })

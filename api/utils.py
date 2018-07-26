@@ -186,13 +186,11 @@ def add_artist_genres(headers, artist_objs):
 
 #  get_artists_in_genre {{{ # 
 
-def get_artists_in_genre(user, genre, max_songs):
+def get_artists_in_genre(user, genre):
     """Return count of artists in genre.
 
     :user: User object to return data for.
     :genre: genre to count artists for. (string)
-    :max_songs: max total songs to include to prevent overflow due to having
-    multiple artists on each track.
 
     :returns: dict of artists in the genre along with the number of songs they
     have. 
@@ -204,19 +202,10 @@ def get_artists_in_genre(user, genre, max_songs):
     total_artist_counts = tracks_in_genre.aggregate(counts=Count('artists'))['counts']
 
     processed_artist_counts = {}
-    # songs_added = 0
     for artist in user_artists:
-        # hacky way to not have total count overflow due to there being multiple
-        # artists on a track
-        # if songs_added + artist.num_songs <= max_songs:
-        #     processed_artist_counts[artist.name] = artist.num_songs
-        #     songs_added += artist.num_songs
         processed_artist_counts[artist.name] = round(artist.track_set
                                                      .filter(genre=genre_obj, users=user)
                                                      .count() * track_count / total_artist_counts, 2)
-    #  processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} for artist in artist_counts]
-    #  processed_artist_counts = {artist.name: artist.num_songs for artist in artist_counts}
-    #  pprint.pprint(processed_artist_counts)
     return processed_artist_counts
 
 #  }}} get_artists_in_genre # 

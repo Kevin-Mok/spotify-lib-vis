@@ -176,10 +176,30 @@ def get_genre_data(request, user_secret):
     genre_counts = (Track.objects.filter(users__exact=user)
                     .values('genre')
                     .order_by('genre')
+                    # annotates each genre and not each Track, due to the earlier values() call
                     .annotate(num_songs=Count('genre'))
                     )
+    # genre_counts is a QuerySet with the format
+    # [{'genre': 'classical', 'num_songs': 100}, {'genre': 'pop', 'num_songs': 50}...]
     for genre_dict in genre_counts:
-        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'], genre_dict['num_songs'])
+        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'])
+    '''
+    Now genre_counts has the format
+    [
+    {'genre': 'classical',
+     'num_songs': 100,
+     'artists': {
+                'Helene Grimaud': 40.5,
+                'Beethoven': 31.2,
+                'Mozart': 22...
+                }
+    },
+    {'genre': 'pop',
+     'num_songs': 150,
+     'artists': {...}
+    },...
+    ]
+    '''
     print("*** Genre Breakdown ***")
     pprint.pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
