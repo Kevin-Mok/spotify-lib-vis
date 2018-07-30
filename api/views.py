@@ -23,9 +23,9 @@ ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
-TRACKS_TO_QUERY = 100
+TRACKS_TO_QUERY = 300
 
-console_logging = True
+CONSOLE_LOGGING = True
 
 #  parse_library {{{ # 
 
@@ -52,9 +52,6 @@ def parse_library(request, user_secret):
         saved_tracks_response = requests.get('https://api.spotify.com/v1/me/tracks', 
                 headers=user_headers,
                 params=payload).json()['items']
-
-        if console_logging:
-            tracks_processed = 0
 
         tracks_processed = 0
         for track_dict in saved_tracks_response:
@@ -92,7 +89,7 @@ def parse_library(request, user_secret):
             
             #  }}} add audio features # 
 
-            if console_logging:
+            if CONSOLE_LOGGING:
                 tracks_processed += 1
                 print("Added track #{}: {} - {}".format(
                     offset + tracks_processed,
