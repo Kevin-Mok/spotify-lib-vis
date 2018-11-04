@@ -14,8 +14,8 @@ from login.models import User
 
 #  }}} imports # 
 
-console_logging = True
-#  console_logging = False
+#  console_logging = True
+console_logging = False
 artists_genre_processed = 0
 features_processed = 0
 
@@ -74,19 +74,32 @@ def save_track_obj(track_dict, artists, user_obj):
     if len(track_query) != 0:
         return track_query[0], False
     else:
-        new_track = Track.objects.create(
-            id=track_dict['id'],
-            year=track_dict['album']['release_date'].split('-')[0],
-            popularity=int(track_dict['popularity']),
-            runtime=int(float(track_dict['duration_ms']) / 1000),
-            name=track_dict['name'],
-            )
+        # check if track is simple or full, simple Track object won't have year
+        #  if 'album' in track_dict:
+        try:
+            new_track = Track.objects.create(
+                id=track_dict['id'],
+                year=track_dict['album']['release_date'].split('-')[0],
+                popularity=int(track_dict['popularity']),
+                runtime=int(float(track_dict['duration_ms']) / 1000),
+                name=track_dict['name'],
+                )
+        #  else:
+        except KeyError:
+            new_track = Track.objects.create(
+                id=track_dict['id'],
+                popularity=int(track_dict['popularity']),
+                runtime=int(float(track_dict['duration_ms']) / 1000),
+                name=track_dict['name'],
+                )
 
         # have to add artists and user_obj after saving object since track needs to
         # have ID before filling in m2m field
         for artist in artists:
             new_track.artists.add(artist)
-        new_track.users.add(user_obj)
+            #  print(new_track.name, artist.name)
+        if user_obj != None:
+            new_track.users.add(user_obj)
         new_track.save()
         return new_track, True
 
@@ -178,6 +191,7 @@ def add_artist_genres(headers, artist_objs):
         else:
             for genre in artists_response[i]['genres']:
                 process_artist_genre(genre, artist_objs[i])
+                #  print(artist_objs[i].name, genre)
 
         if console_logging:
             global artists_genre_processed 
@@ -220,6 +234,15 @@ def get_artists_in_genre(user, genre, max_songs):
     return processed_artist_counts
 
 #  }}} get_artists_in_genre # 
+
+def create_artist_for_track(artist_dict):
+    """TODO: Docstring for create_artist_for_track.
+
+    :artist_dict: TODO
+    :returns: None
+
+    """
+    pass
 
 def get_user_header(user_obj):
     """Returns the authorization string needed to make an API call.

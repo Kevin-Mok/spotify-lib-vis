@@ -19,13 +19,16 @@ from login.utils import get_user_context
 #  }}} imports # 
 
 USER_TRACKS_LIMIT = 50
+HISTORY_LIMIT = 50
 ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
 TRACKS_TO_QUERY = 100
+HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
 console_logging = True
+#  console_logging = False
 
 #  parse_library {{{ # 
 
@@ -118,6 +121,71 @@ def parse_library(request, user_secret):
     return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 
 #  }}} parse_library # 
+
+#  parse_history {{{ # 
+
+def parse_history(request, user_secret):
+    """Scans user's listening history and stores the information in a
+    database.
+
+    :user_secret: secret for User object who's library is being scanned.
+    :returns: None
+    """
+
+    payload = {'limit': str(USER_TRACKS_LIMIT)}
+    artist_genre_queue = []
+    user_obj = User.objects.get(secret=user_secret)
+    user_headers = get_user_header(user_obj)
+
+    history_response = requests.get(HISTORY_ENDPOINT,
+            headers=user_headers,
+            params=payload).json()['items']
+
+    if console_logging:
+        tracks_processed = 0
+
+    for track_dict in history_response:
+        #  add artists {{{ # 
+        
+        # update artist info before track so that Track object can reference
+        # Artist object
+        track_artists = []
+        for artist_dict in track_dict['track']['artists']:
+            artist_obj, artist_created = Artist.objects.get_or_create(
+                    id=artist_dict['id'],
+                    name=artist_dict['name'],)
+            # only add/tally up artist genres if new
+            if artist_created:
+                artist_genre_queue.append(artist_obj)
+                if len(artist_genre_queue) == ARTIST_LIMIT:
+                    add_artist_genres(user_headers, artist_genre_queue)
+                    artist_genre_queue = []
+            track_artists.append(artist_obj)
+        
+        #  }}} add artists # 
+        
+        # don't associate history track with User, not necessarily in their
+        # library
+        track_obj, track_created = save_track_obj(track_dict['track'], 
+                track_artists, None)
+
+        if console_logging:
+            tracks_processed += 1
+            print("Added track #{}: {} - {}".format(
+                tracks_processed,
+                track_obj.artists.first(), 
+                track_obj.name,
+                ))
+
+    if len(artist_genre_queue) > 0:
+        add_artist_genres(user_headers, artist_genre_queue)
+
+    # TODO: update track genres from History relation
+    #  update_track_genres(user_obj)
+
+    return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
+
+#  }}} get_history # 
 
 #  get_artist_data {{{ # 
 

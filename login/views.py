@@ -19,6 +19,7 @@ from .utils import *
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 200
+AUTH_SCOPE = ['user-library-read', 'user-read-recently-played',]
 
 #  generate_random_string {{{ # 
 
@@ -62,7 +63,7 @@ def spotify_login(request):
         'response_type': 'code',
         'redirect_uri': 'http://localhost:8000/login/callback',
         'state': state_str,
-        'scope': 'user-library-read',
+        'scope': " ".join(AUTH_SCOPE),
         'show_dialog': False
     }
 

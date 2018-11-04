@@ -4,8 +4,10 @@ from .views import *
 
 app_name = 'api'
 urlpatterns = [
-    path('scan/<str:user_secret>', parse_library,
-        name='scan'),
+    path('scan/library/<str:user_secret>', parse_library,
+        name='scan_library'),
+    path('scan/history/<str:user_secret>', parse_history,
+        name='scan_history'),
     path('user_artists/<str:user_secret>', get_artist_data,
         name='get_artist_data'),
     path('user_genres/<str:user_secret>', get_genre_data,

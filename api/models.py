@@ -47,7 +47,7 @@ class Track(models.Model):
     id = models.CharField(primary_key=True, max_length=MAX_ID)
     #  artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
     artists = models.ManyToManyField(Artist, blank=True)
-    year = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField(null=True)
     popularity = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=200)
