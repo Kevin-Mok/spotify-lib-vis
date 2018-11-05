@@ -10,7 +10,7 @@ import string
 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max
 from .utils import *
 from .models import *
 from login.models import User
@@ -133,11 +133,11 @@ def parse_history(request, user_secret):
     :returns: None
     """
 
-    payload = {'limit': str(USER_TRACKS_LIMIT)}
-    artist_genre_queue = []
     user_obj = User.objects.get(secret=user_secret)
+    last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
+    payload = {'limit': str(USER_TRACKS_LIMIT), 'after': last_time_played.isoformat()}
+    artist_genre_queue = []
     user_headers = get_user_header(user_obj)
-
     history_response = requests.get(HISTORY_ENDPOINT,
             headers=user_headers,
             params=payload).json()['items']
@@ -171,7 +171,7 @@ def parse_history(request, user_secret):
                 track_artists, None)
         history_obj, history_created = History.objects.get_or_create(
                 user=user_obj,
-                time=parse(track_dict['played_at']),
+                timestamp=parse(track_dict['played_at']),
                 track=track_obj,)
 
         if console_logging:
@@ -179,7 +179,7 @@ def parse_history(request, user_secret):
             print("Added track #{} for user {}: {} - {}".format(
                 tracks_processed,
                 history_obj.user,
-                history_obj.time,
+                history_obj.timestamp,
                 history_obj.track,
                 ))
 
