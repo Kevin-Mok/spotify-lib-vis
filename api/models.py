@@ -86,3 +86,23 @@ class AudioFeatures(models.Model):
         return super(AudioFeatures, self).__str__()
 
 #  }}} AudioFeatures #
+
+#  History {{{ # 
+
+class History(models.Model):
+        
+    class Meta:
+        verbose_name = "History"
+        verbose_name_plural = "History"
+        unique_together = (("user", "time"),)
+
+    history_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    time = models.DateTimeField()
+    track = models.ForeignKey(Track, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return (self.user, self.time, self.track)
+
+#  }}} #
+

@@ -15,6 +15,7 @@ from .utils import *
 from .models import *
 from login.models import User
 from login.utils import get_user_context
+from dateutil.parser import parse
 
 #  }}} imports # 
 
@@ -168,13 +169,18 @@ def parse_history(request, user_secret):
         # library
         track_obj, track_created = save_track_obj(track_dict['track'], 
                 track_artists, None)
+        history_obj, history_created = History.objects.get_or_create(
+                user=user_obj,
+                time=parse(track_dict['played_at']),
+                track=track_obj,)
 
         if console_logging:
             tracks_processed += 1
-            print("Added track #{}: {} - {}".format(
+            print("Added track #{} for user {}: {} - {}".format(
                 tracks_processed,
-                track_obj.artists.first(), 
-                track_obj.name,
+                history_obj.user,
+                history_obj.time,
+                history_obj.track,
                 ))
 
     if len(artist_genre_queue) > 0:
