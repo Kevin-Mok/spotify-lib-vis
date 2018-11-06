@@ -3,9 +3,9 @@ body {
   background-color: #1e1e1e;
 }
 
-h1 {
+h1,th {
   /* light grey */
-  color: #e5e5e5;
+  color: #cccccc;
 }
 
 p,td {

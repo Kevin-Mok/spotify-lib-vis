@@ -45,7 +45,6 @@ class Track(models.Model):
         verbose_name_plural = "Tracks"
 
     id = models.CharField(primary_key=True, max_length=MAX_ID)
-    #  artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
     artists = models.ManyToManyField(Artist, blank=True)
     year = models.PositiveSmallIntegerField(null=True)
     popularity = models.PositiveSmallIntegerField()
@@ -96,13 +95,20 @@ class History(models.Model):
         verbose_name_plural = "History"
         unique_together = (("user", "timestamp"),)
 
-    history_id = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
 
     def __str__(self):
         return " - ".join((str(self.user), str(self.timestamp), str(self.track)))
+
+    def get_track_name(self):
+        return self.track.name
+
+    def get_artists(self):
+        artist_names = [artist.name for artist in self.track.artists.all()]
+        return ', '.join(artist_names)
 
 #  }}} #
 
