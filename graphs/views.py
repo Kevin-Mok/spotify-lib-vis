@@ -6,12 +6,13 @@ import requests
 import os
 import urllib
 import secrets
-import pprint
+from pprint import pprint
 import string
 from datetime import datetime
 
 from django.shortcuts import render, redirect
 from .utils import *
+from django_tables2 import RequestConfig
 
 #  }}} imports # 
 
@@ -48,6 +49,8 @@ def display_history_table(request, user_secret):
     :param user_secret: user secret used for identification
     :return: renders the user history page
     """
-    return render(request, "graphs/user_history.html",
-            get_secret_context(user_secret))
+    context = get_secret_context(user_secret) 
+    context.update(get_user_history(user_secret))
+    RequestConfig(request).configure(context['user_history_table'])
+    return render(request, "graphs/user_history.html", context)
 

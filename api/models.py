@@ -102,7 +102,7 @@ class History(models.Model):
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
 
     def __str__(self):
-        return (self.user, self.time, self.track)
+        return " - ".join((str(self.user), str(self.timestamp), str(self.track)))
 
 #  }}} #
 

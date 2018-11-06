@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'login.apps.LoginConfig',
     'api.apps.ApiConfig',
     'graphs.apps.GraphsConfig',
+    'django_tables2',
 ]
 
 MIDDLEWARE = [

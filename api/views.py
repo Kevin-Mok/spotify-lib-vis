@@ -19,6 +19,8 @@ from dateutil.parser import parse
 
 #  }}} imports # 
 
+#  constants {{{ # 
+
 USER_TRACKS_LIMIT = 50
 HISTORY_LIMIT = 50
 ARTIST_LIMIT = 50
@@ -30,6 +32,8 @@ HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
 console_logging = True
 #  console_logging = False
+
+#  }}} constants # 
 
 #  parse_library {{{ # 
 
