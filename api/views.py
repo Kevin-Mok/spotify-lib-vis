@@ -176,12 +176,8 @@ def parse_history(request, user_secret):
 
         if console_logging:
             tracks_processed += 1
-            print("Added track #{} for user {}: {} - {}".format(
-                tracks_processed,
-                history_obj.user,
-                history_obj.timestamp,
-                history_obj.track,
-                ))
+            print("Added history track #{}: {}".format(
+                tracks_processed, history_obj,))
 
     if len(artist_genre_queue) > 0:
         add_artist_genres(user_headers, artist_genre_queue)

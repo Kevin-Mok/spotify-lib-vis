@@ -40,3 +40,14 @@ def display_features_graphs(request, user_secret):
     """
     return render(request, "graphs/features_graphs.html",
             get_secret_context(user_secret))
+
+def display_history_table(request, user_secret):
+    """Renders the user history page
+
+    :param request: the HTTP request
+    :param user_secret: user secret used for identification
+    :return: renders the user history page
+    """
+    return render(request, "graphs/user_history.html",
+            get_secret_context(user_secret))
+
