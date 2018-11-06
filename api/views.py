@@ -5,7 +5,6 @@ import random
 import requests
 import urllib
 import secrets
-import pprint
 import string
 
 from django.shortcuts import render, redirect
@@ -16,6 +15,7 @@ from .models import *
 from login.models import User
 from login.utils import get_user_context
 from dateutil.parser import parse
+from pprint import pprint
 
 #  }}} imports # 
 
@@ -138,13 +138,16 @@ def parse_history(request, user_secret):
     """
 
     user_obj = User.objects.get(secret=user_secret)
+    payload = {'limit': str(USER_TRACKS_LIMIT)}
     last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
-    payload = {'limit': str(USER_TRACKS_LIMIT), 'after': last_time_played.isoformat()}
+    if last_time_played is not None:
+        payload['after'] = last_time_played.isoformat()
     artist_genre_queue = []
     user_headers = get_user_header(user_obj)
     history_response = requests.get(HISTORY_ENDPOINT,
             headers=user_headers,
             params=payload).json()['items']
+    #  pprint(history_response)
 
     if console_logging:
         tracks_processed = 0

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'graphs.apps.GraphsConfig',
     'django_tables2',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

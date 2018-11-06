@@ -13,6 +13,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from .utils import *
 from django_tables2 import RequestConfig
+from api.models import History
 
 #  }}} imports # 
 
@@ -49,8 +50,14 @@ def display_history_table(request, user_secret):
     :param user_secret: user secret used for identification
     :return: renders the user history page
     """
-    context = get_secret_context(user_secret) 
-    context.update(get_user_history(user_secret))
-    RequestConfig(request).configure(context['user_history_table'])
+    user_id = User.objects.get(secret=user_secret).id
+    user_history = History.objects.filter(user__exact=user_id).order_by('-timestamp')
+    history_table = HistoryTable(user_history)
+    history_table.exclude = ('id', 'user', 'track', ) 
+    RequestConfig(request).configure(history_table)
+
+    context = { 'user_history_table': history_table, 
+            'user_id': user_id, }
+
     return render(request, "graphs/user_history.html", context)
 
