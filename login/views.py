@@ -74,6 +74,9 @@ def callback(request):
     user_obj = create_user(token_response['refresh_token'],
             token_response['access_token'],
             token_response['expires_in']) 
+    
+    request.session['user_id'] = user_obj.id
+    request.session['user_secret'] = user_obj.secret
 
     return render(request, 'login/scan.html', get_user_context(user_obj))
 
@@ -86,6 +89,10 @@ def admin_graphs(request):
     """
     user_id = "polarbier"
     #  user_id = "chrisshyi13"
+
+    request.session['user_id'] = user_id
+    #  request.session['user_secret'] = user_obj.secret
+    request.session['user_secret'] = User.objects.get(id=user_id).secret
     user_obj = User.objects.get(id=user_id)
     return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 

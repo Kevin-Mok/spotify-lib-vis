@@ -43,14 +43,14 @@ def display_features_graphs(request, user_secret):
     return render(request, "graphs/features_graphs.html",
             get_secret_context(user_secret))
 
-def display_history_table(request, user_secret):
+def display_history_table(request):
     """Renders the user history page
 
     :param request: the HTTP request
     :param user_secret: user secret used for identification
     :return: renders the user history page
     """
-    user_id = User.objects.get(secret=user_secret).id
+    user_id = request.session['user_id']
     user_history = History.objects.filter(user__exact=user_id).order_by('-timestamp')
     history_table = HistoryTable(user_history)
     history_table.exclude = ('id', 'user', 'track', ) 
