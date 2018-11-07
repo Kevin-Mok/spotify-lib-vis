@@ -53,7 +53,7 @@ class HistoryList(ExportMixin, SingleTableView):
     template_name = 'graphs/user_history.html'
 
     def get_table_kwargs(self):
-        return { 'exclude': ('id', 'user', 'track', 'track_id', ) }
+        return { 'exclude': ('id', 'user', 'track', 'track_id', 'iso_timestamp', ) }
 
     def get_table_data(self):
         return History.objects.filter(user__exact=self.request.session['user_id']).order_by('-timestamp')
@@ -67,7 +67,8 @@ class HistoryList(ExportMixin, SingleTableView):
         return "{}.{}".format(self.request.session['user_id'], export_format)
 
     def create_export(self, export_format):
-        export_exclude = ('id', 'user', 'track', 'track_name', 'artists', )
+        export_exclude = ('id', 'user', 'track', 'track_name', 'artists',
+                'timestamp', )
         exporter = TableExport(
             export_format=export_format,
             table=self.get_table(exclude=export_exclude),
