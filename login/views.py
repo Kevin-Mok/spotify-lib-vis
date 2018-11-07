@@ -1,13 +1,10 @@
 #  imports {{{ # 
 
 import math
-import random
-import requests
 import os
 import urllib
 import secrets
 import pprint
-import string
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -21,28 +18,8 @@ TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 200
 AUTH_SCOPE = ['user-library-read', 'user-read-recently-played',]
 
-#  generate_random_string {{{ # 
-
-
-def generate_random_string(length):
-    """Generates a random string of a certain length
-
-    Args:
-        length: the desired length of the randomized string
-    
-    Returns:
-        A random string
-    """
-    all_chars = string.ascii_letters + string.digits
-    rand_str = "".join(random.choice(all_chars) for _ in range(length)) 
-    
-    return rand_str
-
-#  }}} generate_random_string # 
-
 #  index {{{ # 
 
-# Create your views here.
 def index(request):
     return render(request, 'login/index.html')
 
@@ -73,6 +50,8 @@ def spotify_login(request):
 
 #  }}} spotify_login # 
 
+#  callback {{{ # 
+
 def callback(request):
     """ Step 2 in authorization flow: Have your application request refresh and
     access tokens; Spotify returns access and refresh tokens. 
@@ -97,38 +76,8 @@ def callback(request):
             token_response['expires_in']) 
 
     return render(request, 'login/scan.html', get_user_context(user_obj))
-    #  return redirect('user/' + user_obj.secret)
 
-
-def create_user(refresh_token, access_token, access_expires_in):
-    """Create a User object based on information returned from Step 2 (callback
-    function) of auth flow.
-
-    :refresh_token: Used to renew access tokens.
-    :access_token: Used in Spotify API calls.
-    :access_expires_in: How long the access token last in seconds.
-
-    :returns: The newly created User object.
-
-    """
-    profile_response = requests.get('https://api.spotify.com/v1/me',
-            headers={'Authorization': "Bearer " + access_token}).json()
-    user_id = profile_response['id']
-
-    try:
-        user_obj = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        # Python docs recommends 32 bytes of randomness against brute
-        # force attacks
-        user_obj = User.objects.create(
-                id=user_id,
-                secret=secrets.token_urlsafe(32),
-                refresh_token=refresh_token,
-                access_token=access_token,
-                access_expires_in=access_expires_in,
-                )
-
-    return user_obj
+#  }}} callback # 
 
 #  admin_graphs {{{ # 
 

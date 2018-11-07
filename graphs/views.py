@@ -12,7 +12,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from .utils import *
-from django_tables2 import RequestConfig
+from django_tables2 import RequestConfig, SingleTableView
 from api.models import History
 
 #  }}} imports # 
@@ -60,4 +60,10 @@ def display_history_table(request, user_secret):
             'user_id': user_id, }
 
     return render(request, "graphs/user_history.html", context)
+
+class HistoryList(SingleTableView):
+    """Create table with list of song history."""
+    model = History
+    table_class = HistoryTable
+    #  table_data =
 
