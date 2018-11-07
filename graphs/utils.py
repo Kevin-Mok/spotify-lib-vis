@@ -10,6 +10,7 @@ class HistoryTable(tables.Table):
         template_name = 'django_tables2/bootstrap.html'
 
     track_name = tables.Column(accessor='get_track_name', orderable=False)
+    track_id = tables.Column(accessor='get_track_id', orderable=False)
     artists = tables.Column(accessor='get_artists', orderable=False)
 
 def get_secret_context(user_secret):

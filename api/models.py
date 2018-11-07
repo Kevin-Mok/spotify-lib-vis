@@ -106,6 +106,9 @@ class History(models.Model):
     def get_track_name(self):
         return self.track.name
 
+    def get_track_id(self):
+        return self.track.id
+
     def get_artists(self):
         artist_names = [artist.name for artist in self.track.artists.all()]
         return ', '.join(artist_names)
