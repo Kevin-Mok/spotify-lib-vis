@@ -79,10 +79,7 @@ def callback(request):
     request.session['user_id'] = user_obj.id
     request.session['user_secret'] = user_obj.secret
 
-    context = get_user_context(user_obj)
-    context['form'] = HistoryUploadForm() 
-
-    return render(request, 'login/scan.html', context)
+    return render(request, 'login/scan.html', get_scan_context(request))
 
 #  }}} callback # 
 
@@ -105,14 +102,8 @@ def admin_graphs(request):
 def upload_history(request):
     if request.method == 'POST':
         form = HistoryUploadForm(request.POST, request.FILES)
-        form.fields['user_id'].initial = User.objects.get(id=request.session['user_id'])
         if form.is_valid():
             form.save()
-
-            # Redirect to the document list after POST
             return redirect('graphs:display_history_table')
-    else:
-        form = HistoryUploadForm()
 
-    #  return redirect('graphs:display_history_table')
-    return render(request, 'login/scan.html', context)
+    return render(request, 'login/scan.html', get_scan_context(request))

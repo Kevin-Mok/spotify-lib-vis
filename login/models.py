@@ -22,6 +22,6 @@ class User(models.Model):
         return self.id
 
 class HistoryUpload(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     document = models.FileField(upload_to='history/')
     uploaded_at = models.DateTimeField(auto_now_add=True)

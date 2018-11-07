@@ -13,7 +13,6 @@ def get_user_context(user_obj):
     """
     return { 'user_id': user_obj.id, 'user_secret': user_obj.secret, }
 
-
 #  generate_random_string {{{ # 
 
 def generate_random_string(length):
@@ -67,3 +66,16 @@ def create_user(refresh_token, access_token, access_expires_in):
 
 #  }}} create_user # 
 
+def get_scan_context(request):
+    """Get context for rendering scan page.
+
+    :request: 
+    :returns: Context with upload form and user info.
+
+    """
+    context = { 'user_id': request.session['user_id'], 
+            'user_secret': request.session['user_secret'], }
+    # set hidden user field to current user
+    context['form'] = HistoryUploadForm(initial=
+            { 'user': User.objects.get(id=request.session['user_id']) }) 
+    return context
