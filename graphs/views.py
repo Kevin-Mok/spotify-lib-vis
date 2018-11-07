@@ -45,6 +45,8 @@ def display_features_graphs(request, user_secret):
     return render(request, "graphs/features_graphs.html",
             get_secret_context(user_secret))
 
+#  HistoryList {{{ # 
+
 class HistoryList(ExportMixin, SingleTableView):
     """Create table with list of song history."""
     model = History
@@ -52,6 +54,8 @@ class HistoryList(ExportMixin, SingleTableView):
     context_table_name = 'user_history_table'
     template_name = 'graphs/user_history.html'
 
+    #  overridden methods {{{ # 
+    
     def get_table_kwargs(self):
         return { 'exclude': ('id', 'user', 'track', 'track_id', 'iso_timestamp', ) }
 
@@ -76,3 +80,8 @@ class HistoryList(ExportMixin, SingleTableView):
         )
 
         return exporter.response(filename=self.get_export_filename(export_format))
+    
+    #  }}} overridden methods # 
+
+#  }}} HistoryList # 
+

@@ -9,3 +9,4 @@ api-keys.sh
 Pipfile
 *.txt
 scrap.py
+media/history/*

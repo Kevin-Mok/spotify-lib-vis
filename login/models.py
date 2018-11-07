@@ -20,3 +20,8 @@ class User(models.Model):
 
     def __str__(self):
         return self.id
+
+class HistoryUpload(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    document = models.FileField(upload_to='history/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)

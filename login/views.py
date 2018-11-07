@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 from .models import *
 from .utils import *
+from .forms import HistoryUploadForm
 
 #  }}} imports # 
 
@@ -78,7 +79,10 @@ def callback(request):
     request.session['user_id'] = user_obj.id
     request.session['user_secret'] = user_obj.secret
 
-    return render(request, 'login/scan.html', get_user_context(user_obj))
+    context = get_user_context(user_obj)
+    context['form'] = HistoryUploadForm() 
+
+    return render(request, 'login/scan.html', context)
 
 #  }}} callback # 
 
@@ -97,3 +101,18 @@ def admin_graphs(request):
     return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 
 #  }}} admin_graphs  # 
+
+def upload_history(request):
+    if request.method == 'POST':
+        form = HistoryUploadForm(request.POST, request.FILES)
+        form.fields['user_id'].initial = User.objects.get(id=request.session['user_id'])
+        if form.is_valid():
+            form.save()
+
+            # Redirect to the document list after POST
+            return redirect('graphs:display_history_table')
+    else:
+        form = HistoryUploadForm()
+
+    #  return redirect('graphs:display_history_table')
+    return render(request, 'login/scan.html', context)

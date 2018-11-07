@@ -24,5 +24,10 @@
 		<a href="{% url "api:scan_history" user_secret %}" class="btn btn-primary">
 			Scan History
 		</a>
+		<form action="{% url 'login:upload_history' %}" method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			{{ form.as_p }}
+			<input class="btn btn-primary" type="submit" value="Import History">
+		</form>
     </body>
 </html>

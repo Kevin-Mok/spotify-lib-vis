@@ -10,7 +10,7 @@
 </head>
 <body>
 	<h1>{{ user_id }}'s Listening History</h1>
-	<a class="btn btn-primary " href="{% export_url 'csv' %}" role="button">Export CSV</a>
+	<a class="btn btn-primary " href="{% export_url 'csv' %}" role="button">Export</a>
 	{% render_table user_history_table %}
 </body>
 </html>
