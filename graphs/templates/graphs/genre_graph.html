@@ -46,16 +46,7 @@
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-	// PU: trying to store genreData locally
-    var genreData;
-    d3.json("{% url "api:get_genre_data" user_secret %}",
-		function(data) {
-			genreData = data;
-		}
-    );
-	console.log(genreData);
-	create_genre_graph(genreData);
-	// d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
+	d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
   </script>
 </body>
 </html>
