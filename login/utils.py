@@ -1,8 +1,10 @@
 import string
 import random
 import requests
+import secrets
 
 from .models import User
+from .forms import HistoryUploadForm
 
 def get_user_context(user_obj):
     """Get context for rendering with User's ID and secret.

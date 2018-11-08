@@ -3,7 +3,6 @@
 import math
 import os
 import urllib
-import secrets
 import pprint
 from datetime import datetime
 
@@ -11,7 +10,6 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseBadRequest
 from .models import *
 from .utils import *
-from .forms import HistoryUploadForm
 
 #  }}} imports # 
 
@@ -103,7 +101,8 @@ def upload_history(request):
     if request.method == 'POST':
         form = HistoryUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('graphs:display_history_table')
+            upload_obj = form.save()
+            #  return redirect('graphs:display_history_table')
+            return redirect('api:import_history', upload_id=upload_obj.id)
 
     return render(request, 'login/scan.html', get_scan_context(request))

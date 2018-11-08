@@ -14,4 +14,6 @@ urlpatterns = [
         name='get_genre_data'),
     path('audio_features/<str:audio_feature>/<str:user_secret>',
         get_audio_feature_data, name='get_audio_feature_data'),
+    path('import/history/<upload_id>', import_history, name='import_history'),
 ]
+

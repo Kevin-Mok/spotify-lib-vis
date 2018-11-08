@@ -6,22 +6,26 @@ import requests
 import urllib
 import secrets
 import string
+import csv
 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db.models import Count, Q, Max
+from django.core.files import File
 from .utils import *
 from .models import *
 from login.models import User
 from login.utils import get_user_context
 from dateutil.parser import parse
 from pprint import pprint
+from login.models import HistoryUpload
 
 #  }}} imports # 
 
 #  constants {{{ # 
 
 USER_TRACKS_LIMIT = 50
+TRACKS_LIMIT = 50
 HISTORY_LIMIT = 50
 ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
@@ -29,6 +33,7 @@ FEATURES_LIMIT = 100
 #  FEATURES_LIMIT = 25
 TRACKS_TO_QUERY = 100
 HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
+TRACKS_ENDPOINT = 'https://api.spotify.com/v1/tracks'
 
 console_logging = True
 #  console_logging = False
@@ -261,3 +266,101 @@ def get_genre_data(request, user_secret):
     return JsonResponse(data=list(genre_counts), safe=False) 
 
 #  }}} get_genre_data  # 
+
+#  import_history {{{ # 
+
+def import_history(request, upload_id):
+    """Import history for the user from the file they uploaded.
+
+    :upload_id: ID (PK) of the HistoryUpload entry
+    :returns: None
+    """
+
+    headers = ['timestamp', 'track_id']
+    upload_obj = HistoryUpload.objects.get(id=upload_id)
+    user_headers = get_user_header(upload_obj.user)
+
+    with upload_obj.document.open('r') as f:
+        csv_reader = csv.reader(f, delimiter=',')
+        rows_read = 0
+        history_obj_info_lst = []
+        artist_genre_queue = []
+
+        next(csv_reader)
+        row = next(csv_reader)
+        last_row = False
+        while not last_row:
+            #  if Track.objects.filter(id__exact=row[1]).exists():
+            history_obj_info = {}
+            for i in range(len(headers)):
+                history_obj_info[headers[i]] = row[i]
+            try:
+                row = next(csv_reader)
+            except StopIteration:
+                last_row = True
+            history_obj_info_lst.append(history_obj_info)
+            rows_read += 1
+            if (rows_read % TRACKS_LIMIT == 0) or last_row:
+                track_ids_lst = [info['track_id'] for info in history_obj_info_lst]
+                #  print(len(track_ids_lst))
+                track_ids = ','.join(track_ids_lst)
+                payload = {'ids': track_ids}
+                tracks_response = requests.get(TRACKS_ENDPOINT,
+                        headers=user_headers,
+                        params=payload).json()['tracks']
+                responses_processed = 0
+
+                for track_dict in tracks_response:
+                    #  add artists {{{ #
+
+                    # update artist info before track so that Track object can reference
+                    # Artist object
+                    track_artists = []
+                    for artist_dict in track_dict['artists']:
+                        artist_obj, artist_created = Artist.objects.get_or_create(
+                                id=artist_dict['id'],
+                                name=artist_dict['name'],)
+                        # only add/tally up artist genres if new
+                        if artist_created:
+                            artist_genre_queue.append(artist_obj)
+                            if len(artist_genre_queue) == ARTIST_LIMIT:
+                                add_artist_genres(user_headers, artist_genre_queue)
+                                artist_genre_queue = []
+                        track_artists.append(artist_obj)
+
+                    #  }}} add artists #
+
+                    # don't associate history track with User, not necessarily in their
+                    # library
+                    track_obj, track_created = save_track_obj(track_dict, track_artists, None)
+
+                    timestamp = parse(history_obj_info_lst[responses_processed]['timestamp'])
+                    # missing PK to do get_or_create
+                    history_query = \
+                        History.objects.filter(user__exact=upload_obj.user,
+                                timestamp__exact=timestamp)
+                    if len(history_query) == 0:
+                        history_obj = \
+                            History.objects.create(user=upload_obj.user,
+                                    timestamp=timestamp, 
+                                    track=track_obj,)
+                    else:
+                        history_obj = history_query[0]
+
+                    if console_logging:
+                        print("Processed row #{}: {}".format(
+                            (rows_read - TRACKS_LIMIT) + responses_processed, history_obj,))
+                        responses_processed += 1
+
+                history_obj_info_lst = []
+
+                if len(artist_genre_queue) > 0:
+                    add_artist_genres(user_headers, artist_genre_queue)
+
+                # TODO: update track genres from History relation
+                #  update_track_genres(user_obj)
+
+    return redirect('graphs:display_history_table')
+
+#  }}} get_history # 
+
