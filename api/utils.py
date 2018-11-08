@@ -1,7 +1,6 @@
 #  imports {{{ # 
 import requests
 import math
-import pprint
 import os
 import json
 
@@ -10,7 +9,9 @@ from django.http import JsonResponse
 from django.core import serializers
 from django.utils import timezone
 from .models import *
+from . import views
 from login.models import User
+from pprint import pprint
 
 #  }}} imports # 
 
@@ -182,7 +183,7 @@ def add_artist_genres(headers, artist_objs):
     artist_ids = str.join(",", [artist_obj.id for artist_obj in artist_objs])
     params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
-            headers=headers, 
+            headers=headers,
             params={'ids': artist_ids},
             ).json()['artists']
     for i in range(len(artist_objs)):
@@ -235,14 +236,28 @@ def get_artists_in_genre(user, genre, max_songs):
 
 #  }}} get_artists_in_genre # 
 
-def create_artist_for_track(artist_dict):
-    """TODO: Docstring for create_artist_for_track.
+def save_track_artists(track_dict, artist_genre_queue, user_headers):
+    """ Update artist info before creating Track so that Track object can
+    reference Artist object.
 
-    :artist_dict: TODO
+    :track_dict: TODO
     :returns: None
 
     """
-    pass
+    track_artists = []
+    for artist_dict in track_dict['artists']:
+        artist_obj, artist_created = Artist.objects.get_or_create(
+                id=artist_dict['id'],
+                name=artist_dict['name'],)
+        # only add/tally up artist genres if new
+        if artist_created:
+            artist_genre_queue.append(artist_obj)
+            if len(artist_genre_queue) == views.ARTIST_LIMIT:
+                add_artist_genres(user_headers, artist_genre_queue)
+                artist_genre_queue[:] = []
+        track_artists.append(artist_obj)
+
+    return track_artists
 
 def get_user_header(user_obj):
     """Returns the authorization string needed to make an API call.
