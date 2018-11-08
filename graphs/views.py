@@ -65,6 +65,7 @@ class HistoryList(ExportMixin, SingleTableView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['user_id'] = self.request.session['user_id']
+        context['total_history'] = self.get_table_data().count()
         return context
 
     def get_export_filename(self, export_format):

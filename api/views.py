@@ -150,10 +150,8 @@ def parse_history(request, user_secret):
                 user_headers)
         track_obj, track_created = save_track_obj(track_dict['track'],
                 track_artists, None) 
-        history_obj, history_created = History.objects.get_or_create(
-                user=user_obj,
-                timestamp=parse(track_dict['played_at']),
-                track=track_obj,)
+        history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
+                track_obj)
 
         if console_logging:
             tracks_processed += 1
@@ -257,19 +255,12 @@ def import_history(request, upload_id):
         history_obj_info_lst = []
         artist_genre_queue = []
 
-        next(csv_reader)
-        row = next(csv_reader)
-        last_row = False
+        # skip header row
+        last_row, history_obj_info = get_next_history_row(csv_reader, headers,
+                {})
         while not last_row:
-    
-            #  if Track.objects.filter(id__exact=row[1]).exists():
-            history_obj_info = {}
-            for i in range(len(headers)):
-                history_obj_info[headers[i]] = row[i]
-            try:
-                row = next(csv_reader)
-            except StopIteration:
-                last_row = True
+            last_row, history_obj_info = get_next_history_row(csv_reader,
+                    headers, history_obj_info)
 
     #  }}} setup # 
 
@@ -290,33 +281,22 @@ def import_history(request, upload_id):
                 #  }}} get tracks_response # 
 
                 for track_dict in tracks_response:
-                    #  create History obj {{{ # 
-                    
                     # don't associate history track with User, not necessarily in their
                     # library
                     track_artists = save_track_artists(track_dict, artist_genre_queue,
                             user_headers)
-                    track_obj, track_created = save_track_obj(track_dict, track_artists, None)
+                    track_obj, track_created = save_track_obj(track_dict,
+                            track_artists, None)
 
-                    timestamp = parse(history_obj_info_lst[responses_processed]['timestamp'])
-                    # missing PK to do get_or_create
-                    history_query = \
-                        History.objects.filter(user__exact=upload_obj.user,
-                                timestamp__exact=timestamp)
-                    if len(history_query) == 0:
-                        history_obj = \
-                            History.objects.create(user=upload_obj.user,
-                                    timestamp=timestamp, 
-                                    track=track_obj,)
-                    else:
-                        history_obj = history_query[0]
+                    timestamp = \
+                        parse(history_obj_info_lst[responses_processed]['timestamp'])
+                    history_obj = save_history_obj(upload_obj.user, timestamp,
+                            track_obj)
 
                     if console_logging:
                         print("Processed row #{}: {}".format(
                             (rows_read - TRACKS_LIMIT) + responses_processed, history_obj,))
                         responses_processed += 1
-                    
-                    #  }}} create History obj # 
 
                 history_obj_info_lst = []
 

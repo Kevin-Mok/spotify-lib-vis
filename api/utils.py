@@ -236,12 +236,14 @@ def get_artists_in_genre(user, genre, max_songs):
 
 #  }}} get_artists_in_genre # 
 
+#  save_track_artists {{{ # 
+
 def save_track_artists(track_dict, artist_genre_queue, user_headers):
     """ Update artist info before creating Track so that Track object can
     reference Artist object.
 
-    :track_dict: TODO
-    :returns: None
+    :track_dict: response from Spotify API for track
+    :returns: list of Artist objects in Track
 
     """
     track_artists = []
@@ -258,6 +260,10 @@ def save_track_artists(track_dict, artist_genre_queue, user_headers):
         track_artists.append(artist_obj)
 
     return track_artists
+
+#  }}} save_track_artists # 
+
+#  get_user_header {{{ # 
 
 def get_user_header(user_obj):
     """Returns the authorization string needed to make an API call.
@@ -284,3 +290,44 @@ def get_user_header(user_obj):
         user_obj.save()
 
     return {'Authorization': "Bearer " + user_obj.access_token}
+
+#  }}}  get_user_header # 
+
+def save_history_obj (user, timestamp, track):
+    """Return (get/create) a History object with the specified parameters. Can't
+    use built-in get_or_create since don't know auto PK.
+
+    :user: User object History should be associated with
+    :timestamp: time at which song was listened to
+    :track: Track object for song
+    :returns: History object
+
+    """
+    history_query = History.objects.filter(user__exact=user,
+            timestamp__exact=timestamp)
+    if len(history_query) == 0:
+        history_obj = History.objects.create(user=user, timestamp=timestamp,
+                track=track)
+    else:
+        history_obj = history_query[0]
+
+    return history_obj
+
+def get_next_history_row(csv_reader, headers, prev_info):
+    """Return formatted information from next row in history CSV file.
+
+    :csv_reader: TODO
+    :headers: 
+    :prev_info: history_obj_info of last row in case no more rows
+    :returns: (boolean of if last row, dict with information of next row) 
+
+    """
+    try:
+        row = next(csv_reader)
+        #  if Track.objects.filter(id__exact=row[1]).exists():
+        history_obj_info = {}
+        for i in range(len(headers)):
+            history_obj_info[headers[i]] = row[i]
+        return False, history_obj_info
+    except StopIteration:
+        return True, prev_info
