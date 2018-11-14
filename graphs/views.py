@@ -6,10 +6,11 @@ import requests
 import os
 import urllib
 import secrets
-from pprint import pprint
 import string
-from datetime import datetime
 
+from pprint import pprint
+from datetime import datetime
+from time import strftime
 from django.shortcuts import render, redirect
 from .utils import *
 from django_tables2 import RequestConfig, SingleTableView
@@ -69,7 +70,9 @@ class HistoryList(ExportMixin, SingleTableView):
         return context
 
     def get_export_filename(self, export_format):
-        return "{}.{}".format(self.request.session['user_id'], export_format)
+        user_id = self.request.session['user_id']
+        timestamp = strftime("%m%d%Y-%H%M")
+        return "{}.{}".format("-".join((user_id, timestamp)), export_format)
 
     def create_export(self, export_format):
         export_exclude = ('id', 'user', 'track', 'track_name', 'artists',

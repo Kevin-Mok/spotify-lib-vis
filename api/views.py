@@ -265,6 +265,9 @@ def import_history(request, upload_id):
     #  }}} setup # 
 
             history_obj_info_lst.append(history_obj_info)
+            # PU: refactor saving History object right away if Track obj already
+            # exists
+            # PU: refactor below?
             rows_read += 1
             if (rows_read % TRACKS_LIMIT == 0) or last_row:
                 #  get tracks_response {{{ # 
