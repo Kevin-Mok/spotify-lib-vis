@@ -4,7 +4,7 @@ import math
 import os
 import json
 
-from django.db.models import Count, Q, F
+from django.db.models import Count, F, Max
 from django.http import JsonResponse
 from django.core import serializers
 from django.utils import timezone
@@ -12,11 +12,14 @@ from .models import *
 from . import views
 from login.models import User
 from pprint import pprint
+from dateutil.parser import parse
+
+HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
 #  }}} imports # 
 
-#  console_logging = True
-console_logging = False
+console_logging = True
+#  console_logging = False
 artists_genre_processed = 0
 features_processed = 0
 
@@ -293,6 +296,8 @@ def get_user_header(user_obj):
 
 #  }}}  get_user_header # 
 
+#  save_history_obj  {{{ # 
+
 def save_history_obj (user, timestamp, track):
     """Return (get/create) a History object with the specified parameters. Can't
     use built-in get_or_create since don't know auto PK.
@@ -313,6 +318,10 @@ def save_history_obj (user, timestamp, track):
 
     return history_obj
 
+#  }}} save_history_obj  # 
+
+#  get_next_history_row {{{ # 
+
 def get_next_history_row(csv_reader, headers, prev_info):
     """Return formatted information from next row in history CSV file.
 
@@ -331,3 +340,56 @@ def get_next_history_row(csv_reader, headers, prev_info):
         return False, history_obj_info
     except StopIteration:
         return True, prev_info
+
+#  }}} get_next_history_row # 
+
+#  parse_history {{{ # 
+
+def parse_history(user_secret):
+    """Scans user's listening history and stores the information in a
+    database.
+
+    :user_secret: secret for User object who's library is being scanned.
+    :returns: None
+    """
+
+    user_obj = User.objects.get(secret=user_secret)
+    payload = {'limit': str(views.USER_TRACKS_LIMIT)}
+    last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
+    if last_time_played is not None:
+        payload['after'] = last_time_played.isoformat()
+    artist_genre_queue = []
+    user_headers = get_user_header(user_obj)
+    history_response = requests.get(HISTORY_ENDPOINT,
+            headers=user_headers,
+            params=payload).json()['items']
+    #  pprint(history_response)
+
+    if console_logging:
+        tracks_processed = 0
+
+    for track_dict in history_response:
+        # don't associate history track with User, not necessarily in their
+        # library
+        #  track_obj, track_created = save_track_obj(track_dict['track'],
+                #  track_artists, None)
+        track_artists = save_track_artists(track_dict['track'], artist_genre_queue,
+                user_headers)
+        track_obj, track_created = save_track_obj(track_dict['track'],
+                track_artists, None) 
+        history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
+                track_obj)
+
+        if console_logging:
+            tracks_processed += 1
+            print("Added history track #{}: {}".format(
+                tracks_processed, history_obj,))
+
+    if len(artist_genre_queue) > 0:
+        add_artist_genres(user_headers, artist_genre_queue)
+
+    # TODO: update track genres from History relation
+    #  update_track_genres(user_obj)
+
+#  }}} get_history # 
+

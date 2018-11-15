@@ -6,7 +6,7 @@ app_name = 'api'
 urlpatterns = [
     path('scan/library/<str:user_secret>', parse_library,
         name='scan_library'),
-    path('scan/history/<str:user_secret>', parse_history,
+    path('scan/history/<str:user_secret>', parse_history_request,
         name='scan_history'),
     path('user_artists/<str:user_secret>', get_artist_data,
         name='get_artist_data'),

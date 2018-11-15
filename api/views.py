@@ -32,7 +32,6 @@ FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
 TRACKS_TO_QUERY = 100
-HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 TRACKS_ENDPOINT = 'https://api.spotify.com/v1/tracks'
 
 console_logging = True
@@ -116,55 +115,70 @@ def parse_library(request, user_secret):
 
 #  }}} parse_library # 
 
-#  parse_history {{{ # 
+#  #  parse_history {{{ #
 
-def parse_history(request, user_secret):
-    """Scans user's listening history and stores the information in a
-    database.
+#  def parse_history(request, user_secret):
+    #  """Scans user's listening history and stores the information in a
+    #  database.
 
-    :user_secret: secret for User object who's library is being scanned.
-    :returns: None
-    """
+    #  :user_secret: secret for User object who's library is being scanned.
+    #  :returns: None
+    #  """
 
-    user_obj = User.objects.get(secret=user_secret)
-    payload = {'limit': str(USER_TRACKS_LIMIT)}
-    last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
-    if last_time_played is not None:
-        payload['after'] = last_time_played.isoformat()
-    artist_genre_queue = []
-    user_headers = get_user_header(user_obj)
-    history_response = requests.get(HISTORY_ENDPOINT,
-            headers=user_headers,
-            params=payload).json()['items']
-    #  pprint(history_response)
+    #  user_obj = User.objects.get(secret=user_secret)
+    #  payload = {'limit': str(USER_TRACKS_LIMIT)}
+    #  last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
+    #  if last_time_played is not None:
+        #  payload['after'] = last_time_played.isoformat()
+    #  artist_genre_queue = []
+    #  user_headers = get_user_header(user_obj)
+    #  history_response = requests.get(HISTORY_ENDPOINT,
+            #  headers=user_headers,
+            #  params=payload).json()['items']
+    #  #  pprint(history_response)
 
-    if console_logging:
-        tracks_processed = 0
+    #  if console_logging:
+        #  tracks_processed = 0
 
-    for track_dict in history_response:
-        # don't associate history track with User, not necessarily in their
-        # library
+    #  for track_dict in history_response:
+        #  # don't associate history track with User, not necessarily in their
+        #  # library
+        #  #  track_obj, track_created = save_track_obj(track_dict['track'],
+                #  #  track_artists, None)
+        #  track_artists = save_track_artists(track_dict['track'], artist_genre_queue,
+                #  user_headers)
         #  track_obj, track_created = save_track_obj(track_dict['track'],
                 #  track_artists, None)
-        track_artists = save_track_artists(track_dict['track'], artist_genre_queue,
-                user_headers)
-        track_obj, track_created = save_track_obj(track_dict['track'],
-                track_artists, None) 
-        history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
-                track_obj)
+        #  history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
+                #  track_obj)
 
-        if console_logging:
-            tracks_processed += 1
-            print("Added history track #{}: {}".format(
-                tracks_processed, history_obj,))
+        #  if console_logging:
+            #  tracks_processed += 1
+            #  print("Added history track #{}: {}".format(
+                #  tracks_processed, history_obj,))
 
-    if len(artist_genre_queue) > 0:
-        add_artist_genres(user_headers, artist_genre_queue)
+    #  if len(artist_genre_queue) > 0:
+        #  add_artist_genres(user_headers, artist_genre_queue)
 
-    # TODO: update track genres from History relation
-    #  update_track_genres(user_obj)
+    #  # TODO: update track genres from History relation
+    #  #  update_track_genres(user_obj)
 
-    return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
+    #  return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
+
+#  #  }}} get_history #
+
+#  parse_history {{{ # 
+
+def parse_history_request(request, user_secret):
+    """Request function to call parse_history. Scans user's listening history
+    and stores the information in a database.
+
+    :user_secret: secret for User object who's library is being scanned.
+    :returns: redirects user to logged in page
+    """
+    parse_history(user_secret)
+    return render(request, 'graphs/logged_in.html',
+            get_user_context(User.objects.get(secret=user_secret)))
 
 #  }}} get_history # 
 
