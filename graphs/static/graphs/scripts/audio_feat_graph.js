@@ -24,7 +24,9 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
         featureData[key] = 0;
     }
     // define the vertical scaling function
-    let vScale = d3.scaleLinear().range([height, 0]);
+    // let vScale = d3.scaleLinear().range([height, 0]);
+	let padding = 0.5;
+    let vScale = d3.scaleLinear().range([100 - 2*padding, padding]);
 
     d3.json(`/api/audio_features/${audioFeature}/${userSecret}`)
         .then(function(response) {
@@ -52,12 +54,16 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
         }
         vScale.domain([0, d3.max(dataSet)]).nice();
 
-        let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.5);
+		let hScale = d3.scaleBand()
+			.domain(dataRanges)
+			// .rangeRound([0, width])
+			.rangeRound([padding, 100 - 2*padding])
+			.padding(0.5);
 
         let xAxis = d3.axisBottom().scale(hScale);
         let yAxis = d3.axisLeft().scale(vScale);
 
-        let featureSVG = d3.select(parentElem)
+        let featureSVG = d3.select('#' + parentElem)
             .append('svg').attr('width', width + margin.left + margin.right)
             .attr('height', height + margin.top + margin.bottom);
 
