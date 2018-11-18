@@ -33,9 +33,9 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) 
     //     featureData[key] = 0;
     // }
     // define the vertical scaling function
-    // let vScale = d3.scaleLinear().range([height, 0]);
+	let vScale = d3.scaleLinear().range([height, 0]);
 	let padding = 0.5;
-    let vScale = d3.scaleLinear().range([100 - 2*padding, padding]);
+    // let vScale = d3.scaleLinear().range([100 - 2*padding, padding]);
 
     d3.json(`/api/audio_features/${audioFeature}/${userSecret}`)
         .then(function(response) {
@@ -68,8 +68,8 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) 
 
 		let hScale = d3.scaleBand()
 			.domain(dataRanges)
-			// .rangeRound([0, width])
-			.rangeRound([padding, 100 - 2*padding])
+			.rangeRound([0, width])
+			// .rangeRound([padding, 100 - 2*padding])
 			.padding(0.5);
 
         let xAxis = d3.axisBottom().scale(hScale);
@@ -81,7 +81,7 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) 
 
         let featureGraph = featureSVG.append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`)
-            .attr("fill", "teal");
+			.attr("fill", "#0099CC");
 
         featureGraph.selectAll(".bar")
             .data(dataArr)
@@ -106,6 +106,7 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) 
         featureSVG.append("text")
             .attr('x', (width / 2))
             .attr('y', (margin.top / 2))
+            .attr('fill', "white")
             .attr('text-anchor', 'middle')
             .style('font-size', '14px')
             .text(`${capFeatureStr(audioFeature)}`);

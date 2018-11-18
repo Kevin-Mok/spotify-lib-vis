@@ -6,21 +6,21 @@
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 	<!--[if gt IE 8]><!--> 
 {% load static %}
+{% load sass_tags %}
 <html class="no-js"> <!--<![endif]-->
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>Test DB Page</title>
+	<title>Genre Graph</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-{#    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">#}
+	<!-- <link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}"> -->
 </head>
 
 <!-- }}} header -->
 
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
 
   {% load static %}
   <script src="{% static "graphs/scripts/genre_graph.js" %}"></script>
@@ -29,10 +29,16 @@
     <div class="col-" id="genre-graph"></div>
   </div> -->
 
-  <svg id="genre-graph" width="600" height="400"
-    viewBox="0 0 600 400"
-    perserveAspectRatio="xMinYMid">
-  </svg>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12" id="genre-column">
+      </div>
+    </div>
+  </div>
+        <svg id="genre-graph" width="600" height="400"
+          viewBox="0 0 600 400"
+          perserveAspectRatio="xMinYMid">
+        </svg>
   <script>
     let svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},

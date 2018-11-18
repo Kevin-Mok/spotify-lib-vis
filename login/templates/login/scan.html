@@ -1,4 +1,5 @@
 {% load static %}
+{% load sass_tags %}
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -10,8 +11,7 @@
         <title>User Spotify Data</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-		<link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
+		<link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
     </head>
     <body>
         <!--[if lt IE 7]>

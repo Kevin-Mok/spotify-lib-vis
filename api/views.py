@@ -142,7 +142,8 @@ def get_artist_data(request, user_secret):
         filter=Q(track__users=user)))
     processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} 
             for artist in artist_counts]
-    pprint(processed_artist_counts)
+    if CONSOLE_LOGGING:
+        pprint(processed_artist_counts)
     return JsonResponse(data=processed_artist_counts, safe=False) 
 
 #  }}} get_artist_data # 
@@ -207,8 +208,9 @@ def get_genre_data(request, user_secret):
     },...
     ]
     '''
-    print("*** Genre Breakdown ***")
-    pprint(list(genre_counts))
+    if CONSOLE_LOGGING:
+        print("*** Genre Breakdown ***")
+        pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
 
 #  }}} get_genre_data  # 
