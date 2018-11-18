@@ -33,9 +33,8 @@ FEATURES_LIMIT = 100
 #  FEATURES_LIMIT = 25
 TRACKS_TO_QUERY = 100
 TRACKS_ENDPOINT = 'https://api.spotify.com/v1/tracks'
-
-console_logging = True
-#  console_logging = False
+CONSOLE_LOGGING = True
+#  CONSOLE_LOGGING = False
 
 #  }}} constants # 
 
@@ -66,9 +65,7 @@ def parse_library(request, user_secret):
                 headers=user_headers,
                 params=payload).json()['items']
 
-        if console_logging:
-            tracks_processed = 0
-
+        tracks_processed = 0
         for track_dict in saved_tracks_response:
             track_artists = save_track_artists(track_dict['track'], artist_genre_queue,
                     user_headers)
@@ -76,7 +73,7 @@ def parse_library(request, user_secret):
                     track_artists, user_obj)
 
             #  add audio features {{{ # 
-            
+
             # if a new track is not created, the associated audio feature does
             # not need to be created again
             if track_created:
@@ -87,7 +84,7 @@ def parse_library(request, user_secret):
             
             #  }}} add audio features # 
 
-            if console_logging:
+            if CONSOLE_LOGGING:
                 tracks_processed += 1
                 print("Added track #{}: {} - {}".format(
                     offset + tracks_processed,
@@ -99,7 +96,7 @@ def parse_library(request, user_secret):
         offset += USER_TRACKS_LIMIT
 
     #  clean-up {{{ # 
-    
+
     # update remaining artists without genres and songs without features if
     # there are any
     if len(artist_genre_queue) > 0:
@@ -177,19 +174,39 @@ def get_audio_feature_data(request, audio_feature, user_secret):
 
 #  get_genre_data {{{ # 
 
+
 def get_genre_data(request, user_secret):
-    """Return genre data needed to create the graph user.
+    """Return genre data needed to create the graph
     TODO
     """
     user = User.objects.get(secret=user_secret)
     genre_counts = (Track.objects.filter(users__exact=user)
-            .values('genre')
-            .order_by('genre')
-            .annotate(num_songs=Count('genre'))
-            )
+                    .values('genre')
+                    .order_by('genre')
+                    # annotates each genre and not each Track, due to the earlier values() call
+                    .annotate(num_songs=Count('genre'))
+                    )
+    # genre_counts is a QuerySet with the format
+    # [{'genre': 'classical', 'num_songs': 100}, {'genre': 'pop', 'num_songs': 50}...]
     for genre_dict in genre_counts:
-        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'],
-                genre_dict['num_songs'])
+        genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'])
+    '''
+    Now genre_counts has the format
+    [
+    {'genre': 'classical',
+     'num_songs': 100,
+     'artists': {
+                'Helene Grimaud': 40.5,
+                'Beethoven': 31.2,
+                'Mozart': 22...
+                }
+    },
+    {'genre': 'pop',
+     'num_songs': 150,
+     'artists': {...}
+    },...
+    ]
+    '''
     print("*** Genre Breakdown ***")
     pprint(list(genre_counts))
     return JsonResponse(data=list(genre_counts), safe=False) 
@@ -258,7 +275,7 @@ def import_history(request, upload_id):
                     history_obj = save_history_obj(upload_obj.user, timestamp,
                             track_obj)
 
-                    if console_logging:
+                    if CONSOLE_LOGGING:
                         print("Processed row #{}: {}".format(
                             (rows_read - TRACKS_LIMIT) + responses_processed, history_obj,))
                         responses_processed += 1

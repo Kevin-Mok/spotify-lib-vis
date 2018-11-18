@@ -43,22 +43,38 @@
         <script src="{% static "graphs/scripts/audio_feat_graph.js" %}"></script>
         <script type="text/javascript">
             let userSecret = "{{ user_secret }}";
-            drawAudioFeatGraph("acousticness", [0, 0.25, 0.5, 0.75, 1.0],
-				'acoustic-column', userSecret);
-			drawAudioFeatGraph("danceability", [0, 0.25, 0.5, 0.75, 1.0],
-				'dance-column', userSecret);
-			drawAudioFeatGraph("energy", [0, 0.25, 0.5, 0.75, 1.0],
-				'energy-column', userSecret);
-			drawAudioFeatGraph("instrumentalness", [0, 0.25, 0.5, 0.75, 1.0],
-				'instr-column', userSecret);
-			drawAudioFeatGraph("loudness", [-60, -45, -30, -15, 0],
-				'loud-column', userSecret);
-			drawAudioFeatGraph("speechiness", [0, 0.25, 0.5, 0.75, 1.0],
-				'speech-column', userSecret);
-			drawAudioFeatGraph("tempo", [0, 40, 80, 120, 160, 200],
-				'tempo-column', userSecret);
-			drawAudioFeatGraph("valence", [0, 0.25, 0.5, 0.75, 1.0],
-				'valence-column', userSecret);
+			let graphParams = {
+				"acousticness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'acoustic-column'},
+				"danceability": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'dance-column'},
+				"energy": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'energy-column'},
+				"instrumentalness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'instr-column'},
+				"loudness": {
+					intervalEndPoints: {begin: -60, end: 0, step: 12},
+					colId: 'loud-column'},
+				"speechiness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'speech-column'},
+				"tempo": {
+					intervalEndPoints: {begin: 0, end: 200, step: 40},
+					colId: 'tempo-column'},
+				"valence": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'valence-column'},
+			};
+
+			for(var featureKey in graphParams) {
+				let params = graphParams[featureKey];
+				drawAudioFeatGraph(featureKey, params.intervalEndPoints,
+					params.colId, userSecret);
+			}
         </script>
     </body>
 </html>

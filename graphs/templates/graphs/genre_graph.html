@@ -13,7 +13,7 @@
 	<title>Test DB Page</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
+{#    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">#}
 </head>
 
 <!-- }}} header -->
@@ -34,16 +34,17 @@
     perserveAspectRatio="xMinYMid">
   </svg>
   <script>
-    var svg = d3.select("svg"),
+    let svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom,
         g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    var x = d3.scaleBand()
+    let x = d3.scaleBand()
         .rangeRound([0, width])
-        .paddingInner(0.05)
+        .paddingInner(0.1)
+        .paddingOuter(0.7)
         .align(0.1);
-    var y = d3.scaleLinear()
+    let y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
 	d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
