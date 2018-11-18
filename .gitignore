@@ -1,4 +1,5 @@
 *.pyc
+*.log
 db.sqlite3
 *.bak
 .idea/

@@ -13,13 +13,14 @@ from . import views
 from login.models import User
 from pprint import pprint
 from dateutil.parser import parse
+from datetime import datetime
 
 HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
 #  }}} imports # 
 
-console_logging = True
-#  console_logging = False
+#  console_logging = True
+console_logging = False
 artists_genre_processed = 0
 features_processed = 0
 
@@ -365,8 +366,7 @@ def parse_history(user_secret):
             params=payload).json()['items']
     #  pprint(history_response)
 
-    if console_logging:
-        tracks_processed = 0
+    tracks_processed = 0
 
     for track_dict in history_response:
         # don't associate history track with User, not necessarily in their
@@ -379,9 +379,9 @@ def parse_history(user_secret):
                 track_artists, None) 
         history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
                 track_obj)
+        tracks_processed += 1
 
         if console_logging:
-            tracks_processed += 1
             print("Added history track #{}: {}".format(
                 tracks_processed, history_obj,))
 
@@ -390,6 +390,9 @@ def parse_history(user_secret):
 
     # TODO: update track genres from History relation
     #  update_track_genres(user_obj)
+
+    print("Scanned {} history tracks for user {} at {}.".format(
+        tracks_processed, user_obj.id, datetime.now()))
 
 #  }}} get_history # 
 

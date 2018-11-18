@@ -71,8 +71,9 @@ class HistoryList(ExportMixin, SingleTableView):
 
     def get_export_filename(self, export_format):
         user_id = self.request.session['user_id']
-        timestamp = strftime("%m%d%Y-%H%M")
-        return "{}.{}".format("-".join((user_id, timestamp)), export_format)
+        #  timestamp = strftime("%m%d%Y-%H%M")
+        #  return "{}.{}".format("-".join((user_id, timestamp)), export_format)
+        return "{}.{}".format(user_id, export_format)
 
     def create_export(self, export_format):
         export_exclude = ('id', 'user', 'track', 'track_name', 'artists',
