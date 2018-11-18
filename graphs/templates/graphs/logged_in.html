@@ -8,16 +8,38 @@
     <link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
 </head>
 <body>
-	<h1>{{ user_id }}'s Graphs</h1>
-	<a class="btn btn-primary" href="{% url "graphs:display_audio_features" user_secret %}"
-		role="button">Audio Features</a>
-    <a class="btn btn-primary" href="{% url "graphs:display_genre_graph" user_secret %}"
-		role="button">Genres</a>
-    <a class="btn btn-primary" href="{% url "graphs:display_artist_graph" user_secret %}" role="button">
-        Artists
-    </a>
-    <a class="btn btn-primary" href="{% url "graphs:display_history_table" %}" role="button">
-        History
-    </a>
+  <div class="container-fluid">
+    <div class="row ml-1">
+      <h1>{{ user_id }}'s Graphs</h1>
+    </div>
+    <div class="row">
+      <div class="btn-toolbar ml-3">
+        <div class="btn-group mr-2">
+          <a class="btn btn-primary"
+             href="{% url "graphs:display_audio_features" user_secret %}"
+             role="button">Audio Features</a>
+        </div>
+        <div class="btn-group mr-2">
+          <a class="btn btn-primary" 
+          href="{% url "graphs:display_genre_graph" user_secret %}"
+          role="button">Genres</a>
+        </div>
+        <div class="btn-group mr-2">
+          <a class="btn btn-primary" 
+             href="{% url "graphs:display_artist_graph" user_secret %}"
+             role="button">
+            Artists
+          </a>
+        </div>
+        <div class="btn-group mr-2">
+          <a class="btn btn-primary" 
+             href="{% url "graphs:display_history_table" %}" 
+             role="button">
+            History
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

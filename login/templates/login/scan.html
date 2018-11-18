@@ -1,5 +1,6 @@
 {% load static %}
 {% load sass_tags %}
+{% load crispy_forms_tags %}
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -14,20 +15,34 @@
 		<link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
     </head>
     <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
-        <h1>Logged in as {{ user_id }}</h1>
-		<a href="{% url "api:scan_library" user_secret %}" class="btn btn-primary">
-			Scan Library
-		</a>
-		<a href="{% url "api:scan_history" user_secret %}" class="btn btn-primary">
-			Scan History
-		</a>
-		<form action="{% url 'login:upload_history' %}" method="post" enctype="multipart/form-data">
-			{% csrf_token %}
-			{{ form.as_p }}
-			<input class="btn btn-primary" type="submit" value="Import History">
-		</form>
+      <!--[if lt IE 7]>
+          <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+      <![endif]-->
+      <div class="container-fluid">
+        <div class="row">
+          <h1>Logged in as {{ user_id }}</h1>
+        </div>
+        <div class="row">
+          <div class="col-sm-4 p-2 d-inline">
+            <a href="{% url "api:scan_library" user_secret %}" class="btn btn-primary">
+              Scan Library
+            </a>
+            <a href="{% url "api:scan_history" user_secret %}" class="btn btn-primary">
+              Scan History
+            </a>
+
+            <form action="{% url 'login:upload_history' %}" method="post"
+              enctype="multipart/form-data" class="form-inline">
+              {% csrf_token %}
+              {{ form | crispy }}
+              <div class="float-right">
+                <input class="btn btn-primary" type="submit" value="Import
+                History">
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="col-sm-8"></div>
+      </div>
     </body>
 </html>

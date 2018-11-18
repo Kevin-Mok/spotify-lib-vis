@@ -4,24 +4,34 @@
 <html>
   <head>
     <title>User Login</title>
-	<link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
+    <link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
     <style type="text/css">
-      .text-overflow {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 500px;
-      }
+.text-overflow {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 500px;
+}
     </style>
 
   </head>
 
   <body>
-    <div class="container">
-      <div id="login">
-        <h1>spotify-lib-vis</h1>
-        <a href="{% url 'login:spotify_login' %}" class="btn btn-primary" role="button">Login</a>
-		<a href="{% url 'login:admin_graphs' %}" class="btn btn-primary">Admin Graphs</a>
+    <div class="container-fluid">
+      <h1>spotify-lib-vis</h1>
+      <div class="row">
+        <div class="btn-toolbar ml-3">
+          <div class="btn-group mr-2">
+            <a href="{% url 'login:spotify_login' %}" class="btn btn-primary" role="button">
+              Login
+            </a>
+          </div>
+          <div class="btn-group mr-2">
+            <a href="{% url 'login:admin_graphs' %}" class="btn btn-primary">
+              Admin Graphs
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </body>
