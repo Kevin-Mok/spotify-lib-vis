@@ -177,8 +177,9 @@ def get_audio_feature_data(request, audio_feature, user_secret):
 
 #  get_genre_data {{{ # 
 
+
 def get_genre_data(request, user_secret):
-    """Return genre data needed to create the graph user.
+    """Return genre data needed to create the graph
     TODO
     """
     user = User.objects.get(secret=user_secret)
