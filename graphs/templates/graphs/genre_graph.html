@@ -21,10 +21,18 @@
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
+
   {% load static %}
   <script src="{% static "graphs/scripts/genre_graph.js" %}"></script>
 
-  <svg width="1920" height="740"></svg>
+  <!-- <div class="row">
+    <div class="col-" id="genre-graph"></div>
+  </div> -->
+
+  <svg id="genre-graph" width="600" height="400"
+    viewBox="0 0 600 400"
+    perserveAspectRatio="xMinYMid">
+  </svg>
   <script>
     var svg = d3.select("svg"),
         margin = {top: 20, right: 20, bottom: 30, left: 40},
@@ -38,7 +46,7 @@
     var y = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-    d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
+	d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
   </script>
 </body>
 </html>

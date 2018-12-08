@@ -1,4 +1,5 @@
 *.pyc
+*.log
 db.sqlite3
 *.bak
 .idea/
@@ -9,3 +10,4 @@ api-keys.sh
 Pipfile
 *.txt
 scrap.py
+media/history/*

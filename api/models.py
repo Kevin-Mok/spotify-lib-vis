@@ -45,9 +45,8 @@ class Track(models.Model):
         verbose_name_plural = "Tracks"
 
     id = models.CharField(primary_key=True, max_length=MAX_ID)
-    #  artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
     artists = models.ManyToManyField(Artist, blank=True)
-    year = models.PositiveSmallIntegerField()
+    year = models.PositiveSmallIntegerField(null=True)
     popularity = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=200)
@@ -86,3 +85,30 @@ class AudioFeatures(models.Model):
         return super(AudioFeatures, self).__str__()
 
 #  }}} AudioFeatures #
+
+#  History {{{ # 
+
+class History(models.Model):
+        
+    class Meta:
+        verbose_name = "History"
+        verbose_name_plural = "History"
+        unique_together = (("user", "timestamp"),)
+
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    track = models.ForeignKey(Track, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return " - ".join((str(self.user), str(self.timestamp), str(self.track)))
+
+    def get_artists(self):
+        artist_names = [artist.name for artist in self.track.artists.all()]
+        return ', '.join(artist_names)
+
+    def get_iso_timestamp(self):
+        return self.timestamp.isoformat()
+
+#  }}} #
+

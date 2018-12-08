@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+{% load static %}
+{% load render_table export_url from django_tables2 %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User History</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/dark_bg.css' %}">
+</head>
+<body>
+	<h1>{{ user_id }}'s Listening History</h1>
+	<p> Found {{ total_history }} songs. </p>
+	<a class="btn btn-primary " href="{% export_url 'csv' %}" role="button">Export</a>
+	{% render_table user_history_table %}
+</body>
+</html>

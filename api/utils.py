@@ -1,21 +1,26 @@
 #  imports {{{ # 
 import requests
 import math
-import pprint
 import os
 import json
 
-from django.db.models import Count, Q, F
+from django.db.models import Count, F, Max
 from django.http import JsonResponse
 from django.core import serializers
 from django.utils import timezone
 from .models import *
+from . import views
 from login.models import User
+from pprint import pprint
+from dateutil.parser import parse
+from datetime import datetime
+
+HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
 #  }}} imports # 
 
-console_logging = True
-#  console_logging = False
+#  console_logging = True
+console_logging = False
 artists_genre_processed = 0
 features_processed = 0
 
@@ -74,19 +79,32 @@ def save_track_obj(track_dict, artists, user_obj):
     if len(track_query) != 0:
         return track_query[0], False
     else:
-        new_track = Track.objects.create(
-            id=track_dict['id'],
-            year=track_dict['album']['release_date'].split('-')[0],
-            popularity=int(track_dict['popularity']),
-            runtime=int(float(track_dict['duration_ms']) / 1000),
-            name=track_dict['name'],
-            )
+        # check if track is simple or full, simple Track object won't have year
+        #  if 'album' in track_dict:
+        try:
+            new_track = Track.objects.create(
+                id=track_dict['id'],
+                year=track_dict['album']['release_date'].split('-')[0],
+                popularity=int(track_dict['popularity']),
+                runtime=int(float(track_dict['duration_ms']) / 1000),
+                name=track_dict['name'],
+                )
+        #  else:
+        except KeyError:
+            new_track = Track.objects.create(
+                id=track_dict['id'],
+                popularity=int(track_dict['popularity']),
+                runtime=int(float(track_dict['duration_ms']) / 1000),
+                name=track_dict['name'],
+                )
 
         # have to add artists and user_obj after saving object since track needs to
         # have ID before filling in m2m field
         for artist in artists:
             new_track.artists.add(artist)
-        new_track.users.add(user_obj)
+            #  print(new_track.name, artist.name)
+        if user_obj != None:
+            new_track.users.add(user_obj)
         new_track.save()
         return new_track, True
 
@@ -169,8 +187,8 @@ def add_artist_genres(headers, artist_objs):
     artist_ids = str.join(",", [artist_obj.id for artist_obj in artist_objs])
     params = {'ids': artist_ids}
     artists_response = requests.get('https://api.spotify.com/v1/artists/',
-            headers=headers, 
-            params=params,
+            headers=headers,
+            params={'ids': artist_ids},
             ).json()['artists']
     for i in range(len(artist_objs)):
         if len(artists_response[i]['genres']) == 0:
@@ -178,6 +196,7 @@ def add_artist_genres(headers, artist_objs):
         else:
             for genre in artists_response[i]['genres']:
                 process_artist_genre(genre, artist_objs[i])
+                #  print(artist_objs[i].name, genre)
 
         if console_logging:
             global artists_genre_processed 
@@ -221,6 +240,35 @@ def get_artists_in_genre(user, genre, max_songs):
 
 #  }}} get_artists_in_genre # 
 
+#  save_track_artists {{{ # 
+
+def save_track_artists(track_dict, artist_genre_queue, user_headers):
+    """ Update artist info before creating Track so that Track object can
+    reference Artist object.
+
+    :track_dict: response from Spotify API for track
+    :returns: list of Artist objects in Track
+
+    """
+    track_artists = []
+    for artist_dict in track_dict['artists']:
+        artist_obj, artist_created = Artist.objects.get_or_create(
+                id=artist_dict['id'],
+                name=artist_dict['name'],)
+        # only add/tally up artist genres if new
+        if artist_created:
+            artist_genre_queue.append(artist_obj)
+            if len(artist_genre_queue) == views.ARTIST_LIMIT:
+                add_artist_genres(user_headers, artist_genre_queue)
+                artist_genre_queue[:] = []
+        track_artists.append(artist_obj)
+
+    return track_artists
+
+#  }}} save_track_artists # 
+
+#  get_user_header {{{ # 
+
 def get_user_header(user_obj):
     """Returns the authorization string needed to make an API call.
 
@@ -246,3 +294,105 @@ def get_user_header(user_obj):
         user_obj.save()
 
     return {'Authorization': "Bearer " + user_obj.access_token}
+
+#  }}}  get_user_header # 
+
+#  save_history_obj  {{{ # 
+
+def save_history_obj (user, timestamp, track):
+    """Return (get/create) a History object with the specified parameters. Can't
+    use built-in get_or_create since don't know auto PK.
+
+    :user: User object History should be associated with
+    :timestamp: time at which song was listened to
+    :track: Track object for song
+    :returns: History object
+
+    """
+    history_query = History.objects.filter(user__exact=user,
+            timestamp__exact=timestamp)
+    if len(history_query) == 0:
+        history_obj = History.objects.create(user=user, timestamp=timestamp,
+                track=track)
+    else:
+        history_obj = history_query[0]
+
+    return history_obj
+
+#  }}} save_history_obj  # 
+
+#  get_next_history_row {{{ # 
+
+def get_next_history_row(csv_reader, headers, prev_info):
+    """Return formatted information from next row in history CSV file.
+
+    :csv_reader: TODO
+    :headers: 
+    :prev_info: history_obj_info of last row in case no more rows
+    :returns: (boolean of if last row, dict with information of next row) 
+
+    """
+    try:
+        row = next(csv_reader)
+        #  if Track.objects.filter(id__exact=row[1]).exists():
+        history_obj_info = {}
+        for i in range(len(headers)):
+            history_obj_info[headers[i]] = row[i]
+        return False, history_obj_info
+    except StopIteration:
+        return True, prev_info
+
+#  }}} get_next_history_row # 
+
+#  parse_history {{{ # 
+
+def parse_history(user_secret):
+    """Scans user's listening history and stores the information in a
+    database.
+
+    :user_secret: secret for User object who's library is being scanned.
+    :returns: None
+    """
+
+    user_obj = User.objects.get(secret=user_secret)
+    payload = {'limit': str(views.USER_TRACKS_LIMIT)}
+    last_time_played = History.objects.filter(user=user_obj).aggregate(Max('timestamp'))['timestamp__max']
+    if last_time_played is not None:
+        payload['after'] = last_time_played.isoformat()
+    artist_genre_queue = []
+    user_headers = get_user_header(user_obj)
+    history_response = requests.get(HISTORY_ENDPOINT,
+            headers=user_headers,
+            params=payload).json()['items']
+    #  pprint(history_response)
+
+    tracks_processed = 0
+
+    for track_dict in history_response:
+        # don't associate history track with User, not necessarily in their
+        # library
+        #  track_obj, track_created = save_track_obj(track_dict['track'],
+                #  track_artists, None)
+        track_artists = save_track_artists(track_dict['track'], artist_genre_queue,
+                user_headers)
+        track_obj, track_created = save_track_obj(track_dict['track'],
+                track_artists, None) 
+        history_obj = save_history_obj(user_obj, parse(track_dict['played_at']),
+                track_obj)
+        tracks_processed += 1
+
+        if console_logging:
+            print("Added history track #{}: {}".format(
+                tracks_processed, history_obj,))
+
+    if len(artist_genre_queue) > 0:
+        add_artist_genres(user_headers, artist_genre_queue)
+
+    # TODO: update track genres from History relation
+    #  update_track_genres(user_obj)
+
+    print("Scanned {} history tracks for user {} at {}.".format(
+        tracks_processed, user_obj.id, datetime.now()))
+
+#  }}} get_history # 
+

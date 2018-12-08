@@ -1,8 +1,15 @@
 body {
-background-color: #1e1e1e;
+  /* dark grey */
+  background-color: #1e1e1e;
 }
 
-h1,p {
-color: grey;
+h1,th {
+  /* light grey */
+  color: #cccccc;
+}
+
+p,td {
+  /* light-dark grey */
+  color: #b2b2b2;
 }
 

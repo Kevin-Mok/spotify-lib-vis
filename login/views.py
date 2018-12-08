@@ -1,13 +1,9 @@
 #  imports {{{ # 
 
 import math
-import random
-import requests
 import os
 import urllib
-import secrets
 import pprint
-import string
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -19,29 +15,10 @@ from .utils import *
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 200
-
-#  generate_random_string {{{ # 
-
-
-def generate_random_string(length):
-    """Generates a random string of a certain length
-
-    Args:
-        length: the desired length of the randomized string
-    
-    Returns:
-        A random string
-    """
-    all_chars = string.ascii_letters + string.digits
-    rand_str = "".join(random.choice(all_chars) for _ in range(length)) 
-    
-    return rand_str
-
-#  }}} generate_random_string # 
+AUTH_SCOPE = ['user-library-read', 'user-read-recently-played',]
 
 #  index {{{ # 
 
-# Create your views here.
 def index(request):
     return render(request, 'login/index.html')
 
@@ -62,7 +39,7 @@ def spotify_login(request):
         'response_type': 'code',
         'redirect_uri': 'http://localhost:8000/login/callback',
         'state': state_str,
-        'scope': 'user-library-read',
+        'scope': " ".join(AUTH_SCOPE),
         'show_dialog': False
     }
 
@@ -71,6 +48,8 @@ def spotify_login(request):
     return redirect(authorize_url)
 
 #  }}} spotify_login # 
+
+#  callback {{{ # 
 
 def callback(request):
     """ Step 2 in authorization flow: Have your application request refresh and
@@ -94,40 +73,13 @@ def callback(request):
     user_obj = create_user(token_response['refresh_token'],
             token_response['access_token'],
             token_response['expires_in']) 
+    
+    request.session['user_id'] = user_obj.id
+    request.session['user_secret'] = user_obj.secret
 
-    return render(request, 'login/scan.html', get_user_context(user_obj))
-    #  return redirect('user/' + user_obj.secret)
+    return render(request, 'login/scan.html', get_scan_context(request))
 
-
-def create_user(refresh_token, access_token, access_expires_in):
-    """Create a User object based on information returned from Step 2 (callback
-    function) of auth flow.
-
-    :refresh_token: Used to renew access tokens.
-    :access_token: Used in Spotify API calls.
-    :access_expires_in: How long the access token last in seconds.
-
-    :returns: The newly created User object.
-
-    """
-    profile_response = requests.get('https://api.spotify.com/v1/me',
-            headers={'Authorization': "Bearer " + access_token}).json()
-    user_id = profile_response['id']
-
-    try:
-        user_obj = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        # Python docs recommends 32 bytes of randomness against brute
-        # force attacks
-        user_obj = User.objects.create(
-                id=user_id,
-                secret=secrets.token_urlsafe(32),
-                refresh_token=refresh_token,
-                access_token=access_token,
-                access_expires_in=access_expires_in,
-                )
-
-    return user_obj
+#  }}} callback # 
 
 #  admin_graphs {{{ # 
 
@@ -136,7 +88,21 @@ def admin_graphs(request):
     """
     user_id = "polarbier"
     #  user_id = "chrisshyi13"
+
+    request.session['user_id'] = user_id
+    #  request.session['user_secret'] = user_obj.secret
+    request.session['user_secret'] = User.objects.get(id=user_id).secret
     user_obj = User.objects.get(id=user_id)
     return render(request, 'graphs/logged_in.html', get_user_context(user_obj))
 
 #  }}} admin_graphs  # 
+
+def upload_history(request):
+    if request.method == 'POST':
+        form = HistoryUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            upload_obj = form.save()
+            #  return redirect('graphs:display_history_table')
+            return redirect('api:import_history', upload_id=upload_obj.id)
+
+    return render(request, 'login/scan.html', get_scan_context(request))
