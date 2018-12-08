@@ -1,0 +1,14 @@
+[Unit]
+Description=Update my Spotify listening history.
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=300
+User=kevin
+ExecStart=/usr/bin/bash /home/kevin/coding/spotify-lib-vis/src/update-history.sh
+
+[Install]
+WantedBy=multi-user.target

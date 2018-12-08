@@ -5,6 +5,7 @@ import os
 import json
 
 from django.db.models import Count, F, Max
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.core import serializers
 from django.utils import timezone
@@ -81,7 +82,8 @@ def save_track_obj(track_dict, artists, user_obj):
     else:
         # check if track is simple or full, simple Track object won't have year
         #  if 'album' in track_dict:
-        try:
+        if 'release_date' in track_dict['album']:
+        #  try:
             new_track = Track.objects.create(
                 id=track_dict['id'],
                 year=track_dict['album']['release_date'].split('-')[0],
@@ -89,8 +91,8 @@ def save_track_obj(track_dict, artists, user_obj):
                 runtime=int(float(track_dict['duration_ms']) / 1000),
                 name=track_dict['name'],
                 )
-        #  else:
-        except KeyError:
+        else:
+        #  except (IntegrityError, KeyError) as e:
             new_track = Track.objects.create(
                 id=track_dict['id'],
                 popularity=int(track_dict['popularity']),

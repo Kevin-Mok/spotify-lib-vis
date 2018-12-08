@@ -46,7 +46,7 @@ class Track(models.Model):
 
     id = models.CharField(primary_key=True, max_length=MAX_ID)
     artists = models.ManyToManyField(Artist, blank=True)
-    year = models.PositiveSmallIntegerField(null=True)
+    year = models.PositiveSmallIntegerField(blank=True, null=True)
     popularity = models.PositiveSmallIntegerField()
     runtime = models.PositiveSmallIntegerField()
     name = models.CharField(max_length=200)
