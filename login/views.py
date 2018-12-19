@@ -15,7 +15,7 @@ from .utils import *
 
 TIME_FORMAT = '%Y-%m-%d-%H-%M-%S'
 TRACKS_TO_QUERY = 200
-AUTH_SCOPE = ['user-library-read', 'user-read-recently-played',]
+AUTH_SCOPE = ['user-library-read', 'user-read-recently-played', ]
 
 #  index {{{ # 
 
