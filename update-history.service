@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 [Service]
 Type=simple
 Restart=always
-RestartSec=300
+RestartSec="15m"
 User=kevin
 ExecStart=/usr/bin/bash /home/kevin/coding/spotify-lib-vis/src/update-history.sh
 
