@@ -141,7 +141,7 @@ def get_artist_data(request, user_secret):
     artist_counts = Artist.objects.annotate(num_songs=Count('track',
         filter=Q(track__users=user)))
     processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} 
-            for artist in artist_counts]
+            for artist in artist_counts if artist.num_songs > 1]
     if CONSOLE_LOGGING:
         pprint(processed_artist_counts)
     return JsonResponse(data=processed_artist_counts, safe=False) 
@@ -175,7 +175,6 @@ def get_audio_feature_data(request, audio_feature, user_secret):
 
 #  get_genre_data {{{ # 
 
-
 def get_genre_data(request, user_secret):
     """Return genre data needed to create the graph
     TODO
@@ -187,27 +186,17 @@ def get_genre_data(request, user_secret):
                     # annotates each genre and not each Track, due to the earlier values() call
                     .annotate(num_songs=Count('genre'))
                     )
+    genre_counts = [genre_dict for genre_dict in genre_counts if
+            genre_dict['num_songs'] > 3]
+
     # genre_counts is a QuerySet with the format
-    # [{'genre': 'classical', 'num_songs': 100}, {'genre': 'pop', 'num_songs': 50}...]
+    '''
+    Now genre_counts has the format [ {'genre': 'classical', 'num_songs': 100,
+    'artists': { 'Helene Grimaud': 40.5, 'Beethoven': 31.2, ...  }},... ]
+    '''
     for genre_dict in genre_counts:
         genre_dict['artists'] = get_artists_in_genre(user, genre_dict['genre'])
-    '''
-    Now genre_counts has the format
-    [
-    {'genre': 'classical',
-     'num_songs': 100,
-     'artists': {
-                'Helene Grimaud': 40.5,
-                'Beethoven': 31.2,
-                'Mozart': 22...
-                }
-    },
-    {'genre': 'pop',
-     'num_songs': 150,
-     'artists': {...}
-    },...
-    ]
-    '''
+
     if CONSOLE_LOGGING:
         print("*** Genre Breakdown ***")
         pprint(list(genre_counts))

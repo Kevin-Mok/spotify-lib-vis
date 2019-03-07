@@ -222,9 +222,13 @@ def get_artists_in_genre(user, genre):
 
     processed_artist_counts = {}
     for artist in user_artists:
-        processed_artist_counts[artist.name] = round(artist.track_set
-                                                     .filter(genre=genre_obj, users=user)
-                                                     .count() * track_count / total_artist_counts, 2)
+        #  TODO: figure out collab problem # 
+        #  artist_count = math.floor(artist.track_set.filter(genre=genre_obj,
+            #  users=user).count() * track_count / total_artist_counts)
+        artist_count = artist.track_set.filter(genre=genre_obj,
+                users=user).count()
+        if artist_count > 0:
+            processed_artist_counts[artist.name] = artist_count
     return processed_artist_counts
 
 #  }}} get_artists_in_genre # 

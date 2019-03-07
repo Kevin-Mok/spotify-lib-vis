@@ -1,9 +1,9 @@
 <!-- header {{{ -->
 
 <!DOC
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if lt IE 7]>    <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>     <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>     <html class="no-js lt-ie9"> <![endif]-->
 	<!--[if gt IE 8]><!--> 
 {% load static %}
 {% load sass_tags %}
@@ -14,44 +14,46 @@
 	<title>Genre Graph</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<!-- <link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}"> -->
+	<link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
 </head>
 
 <!-- }}} header -->
 
 <body>
   <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
 
   {% load static %}
   <script src="{% static "graphs/scripts/genre_graph.js" %}"></script>
 
   <!-- <div class="row">
-    <div class="col-" id="genre-graph"></div>
+  <div class="col-" id="genre-graph"></div>
   </div> -->
 
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12" id="genre-column">
-      </div>
+  <div class="row">
+    <div class="col-md-12" id="genre-column">
     </div>
   </div>
-        <svg id="genre-graph" width="600" height="400"
-          viewBox="0 0 600 400"
-          perserveAspectRatio="xMinYMid">
-        </svg>
+  </div>
+    {% comment %} <svg id="genre-graph" width="600" height="400"
+      viewBox="0 0 600 400"
+      perserveAspectRatio="xMinYMid"> {% endcomment %}
+    <svg id="genre-graph" width="1500" height="900">
+    </svg>
   <script>
-    let svg = d3.select("svg"),
-        margin = {top: 20, right: 20, bottom: 30, left: 40},
-        width = +svg.attr("width") - margin.left - margin.right,
-        height = +svg.attr("height") - margin.top - margin.bottom,
-        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    let x = d3.scaleBand()
-        .rangeRound([0, width])
-        .paddingInner(0.1)
-        .paddingOuter(0.7)
-        .align(0.1);
-    let y = d3.scaleLinear()
-        .rangeRound([height, 0]);
+  let svg = d3.select("svg"),
+    margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom,
+    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  let x = d3.scaleBand()
+    .rangeRound([0, width])
+    .paddingInner(0.1)
+    .paddingOuter(0.7)
+    .align(0.1);
+  let y = d3.scaleLinear()
+    .rangeRound([height, 0]);
 
 	d3.json("{% url "api:get_genre_data" user_secret %}").then(create_genre_graph);
   </script>
