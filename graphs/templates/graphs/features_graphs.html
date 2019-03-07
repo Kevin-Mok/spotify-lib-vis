@@ -1,37 +1,79 @@
 {% load static %}
+{% load sass_tags %}
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if lt IE 7]>    <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>     <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>     <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>User Spotify Data</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            .tick {
-                font-size: 15px;
-            }
-        </style>
-    </head>
-    <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
-        <script src="https://d3js.org/d3.v5.js"></script>
-        <script src="{% static "graphs/scripts/audio_feat_graph.js" %}"></script>
-        <script type="text/javascript">
-            let userSecret = "{{ user_secret }}";
-            drawAudioFeatGraph("instrumentalness", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-            drawAudioFeatGraph("valence", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-            drawAudioFeatGraph("energy", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-            drawAudioFeatGraph("tempo", {begin: 0, end: 200, step: 40}, 'body', userSecret);
-            drawAudioFeatGraph("danceability", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-            drawAudioFeatGraph("acousticness", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-            drawAudioFeatGraph("loudness", {begin: -60, end: 0, step: 12}, 'body', userSecret);
-            drawAudioFeatGraph("speechiness", {begin: 0, end: 1.0, step: 0.20}, 'body', userSecret);
-        </script>
-    </body>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Features Graphs</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
+    <style>
+      .tick {
+        font-size: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!--[if lt IE 7]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+		<div class="container-fluid">
+			<div class="row">
+			  <div class="col-md-3" id="acoustic-column"></div>
+			  <div class="col-md-3" id="dance-column"></div>
+			  <div class="col-md-3" id="energy-column"></div>
+			  <div class="col-md-3" id="instr-column"></div></div>
+			<div class="row">
+			  <div class="col-md-3" id="loud-column"></div>
+			  <div class="col-md-3" id="speech-column"></div>
+			  <div class="col-md-3" id="tempo-column"></div>
+			  <div class="col-md-3" id="valence-column"></div>
+			</div>
+		</div>
+
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="{% static "graphs/scripts/audio_feat_graph.js" %}"></script>
+    <script type="text/javascript">
+      let userSecret = "{{ user_secret }}";
+			let graphParams = {
+				"acousticness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'acoustic-column'},
+				"danceability": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'dance-column'},
+				"energy": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'energy-column'},
+				"instrumentalness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'instr-column'},
+				"loudness": {
+					intervalEndPoints: {begin: -60, end: 0, step: 12},
+					colId: 'loud-column'},
+				"speechiness": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'speech-column'},
+				"tempo": {
+					intervalEndPoints: {begin: 0, end: 200, step: 40},
+					colId: 'tempo-column'},
+				"valence": {
+					intervalEndPoints: {begin: 0, end: 1.0, step: 0.20},
+					colId: 'valence-column'},
+			};
+
+			for(var featureKey in graphParams) {
+				let params = graphParams[featureKey];
+				drawAudioFeatGraph(featureKey, params.intervalEndPoints,
+					params.colId, userSecret);
+			}
+    </script>
+  </body>
 </html>

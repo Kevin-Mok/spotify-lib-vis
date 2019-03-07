@@ -7,11 +7,11 @@
  *  for example:
  *      {begin: 0, end: 1.0, step: 0.25} for instrumentalness would define ranges
  *      [0-0.25), [0.25-0.5), [0.5-0.75), [0.75-1.0]
- *  @param parentElem: the DOM element to append the graph to (a selector string)
+ *  @param colId: the DOM element to append the graph to (a selector string)
  *  @param userSecret: the user secret string for identification
  *  @return None
  */
-function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSecret) {
+function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) {
     // TODO: Not hard code the dimensions?
     let margin = {top: 20, right: 30, bottom: 30, left: 40};
     let width = 480 - margin.left - margin.right,
@@ -33,7 +33,9 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
     //     featureData[key] = 0;
     // }
     // define the vertical scaling function
-    let vScale = d3.scaleLinear().range([height, 0]);
+	let vScale = d3.scaleLinear().range([height, 0]);
+	let padding = 0.5;
+    // let vScale = d3.scaleLinear().range([100 - 2*padding, padding]);
 
     d3.json(`/api/audio_features/${audioFeature}/${userSecret}`)
         .then(function(response) {
@@ -64,18 +66,22 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
         }
         vScale.domain([0, d3.max(dataSet)]).nice();
 
-        let hScale = d3.scaleBand().domain(dataRanges).rangeRound([0, width]).padding(0.5);
+		let hScale = d3.scaleBand()
+			.domain(dataRanges)
+			.rangeRound([0, width])
+			// .rangeRound([padding, 100 - 2*padding])
+			.padding(0.5);
 
         let xAxis = d3.axisBottom().scale(hScale);
         let yAxis = d3.axisLeft().scale(vScale);
 
-        let featureSVG = d3.select(parentElem)
+        let featureSVG = d3.select('#' + colId)
             .append('svg').attr('width', width + margin.left + margin.right)
             .attr('height', height + margin.top + margin.bottom);
 
         let featureGraph = featureSVG.append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`)
-            .attr("fill", "teal");
+			.attr("fill", "#0099CC");
 
         featureGraph.selectAll(".bar")
             .data(dataArr)
@@ -100,6 +106,7 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, parentElem, userSec
         featureSVG.append("text")
             .attr('x', (width / 2))
             .attr('y', (margin.top / 2))
+            .attr('fill', "white")
             .attr('text-anchor', 'middle')
             .style('font-size', '14px')
             .text(`${capFeatureStr(audioFeature)}`);

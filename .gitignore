@@ -1,13 +1,15 @@
-*.pyc
-*.log
-db.sqlite3
-*.bak
 .idea/
 .vscode/*
 */migrations/*
+media/history/*
+
+*.pyc
+*.log
+*.bak
+*.txt
+*.map
 
 api-keys.sh
+db.sqlite3
 Pipfile
-*.txt
 scrap.py
-media/history/*

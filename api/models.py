@@ -30,6 +30,8 @@ class Artist(models.Model):
     id = models.CharField(primary_key=True, max_length=MAX_ID)
     name = models.CharField(max_length=50)
     genres = models.ManyToManyField(Genre, blank=True)
+    # genre = models.ForeignKey(Genre, on_delete=models.CASCADE, blank=True,
+    #                           null=True)
 
     def __str__(self):
         return self.name
@@ -52,7 +54,7 @@ class Track(models.Model):
     name = models.CharField(max_length=200)
     users = models.ManyToManyField(User, blank=True)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE, blank=True,
-            null=True)
+                              null=True)
 
     def __str__(self):
         track_str = "{}, genre: {}, artists: [".format(self.name, self.genre)
