@@ -31,7 +31,8 @@ ARTIST_LIMIT = 50
 FEATURES_LIMIT = 100
 #  ARTIST_LIMIT = 25
 #  FEATURES_LIMIT = 25
-TRACKS_TO_QUERY = 100
+#  TRACKS_TO_QUERY = 100
+TRACKS_TO_QUERY = 500
 TRACKS_ENDPOINT = 'https://api.spotify.com/v1/tracks'
 CONSOLE_LOGGING = True
 #  CONSOLE_LOGGING = False
@@ -141,7 +142,7 @@ def get_artist_data(request, user_secret):
     artist_counts = Artist.objects.annotate(num_songs=Count('track',
         filter=Q(track__users=user)))
     processed_artist_counts = [{'name': artist.name, 'num_songs': artist.num_songs} 
-            for artist in artist_counts if artist.num_songs > 1]
+            for artist in artist_counts if artist.num_songs > 2]
     if CONSOLE_LOGGING:
         pprint(processed_artist_counts)
     return JsonResponse(data=processed_artist_counts, safe=False) 

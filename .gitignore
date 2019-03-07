@@ -2,6 +2,7 @@
 .vscode/*
 */migrations/*
 media/history/*
+spotifyvis/static/graphs/sass/*
 
 *.pyc
 *.log

@@ -5,8 +5,8 @@
  */
 function drawArtistGraph(artistData, parentElem) {
     let margin = {top: 20, right: 30, bottom: 30, left: 40};
-    let width = 1000 - margin.right - margin.left;
-    let height = 1000 - margin.top - margin.bottom;
+    // let width = 1000 - margin.right - margin.left;
+    // let height = 1000 - margin.top - margin.bottom;
 
     let color = d3.scaleOrdinal(d3.schemeCategory10);
     /*
@@ -22,14 +22,23 @@ function drawArtistGraph(artistData, parentElem) {
     let circleRadiusScale = d3.scaleSqrt().domain(songCountExtent).range([circleSize.min, circleSize.max]);
 
     let bubble = d3.pack(artistData)
-        .size([width + 100, height + 100])
+        // .size([width + 100, height + 100])
+        .size([600, 250])
         .padding(0.2);
 
     let svg = d3.select(parentElem)
+        // .append("svg")
+        // .attr("width", width + margin.right + margin.left)
+        // .attr("height", height + margin.top + margin.bottom)
+        // .attr("class", "bubble");
+        .append("div")
+        .classed("svg-container", true) //container class to make it responsive
         .append("svg")
-        .attr("width", width + margin.right + margin.left)
-        .attr("height", height + margin.top + margin.bottom)
-        .attr("class", "bubble");
+        //responsive SVG needs these 2 attributes and no width and height attr
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("viewBox", "0 0 600 250")
+        //class to make it responsive
+        .classed("svg-content-responsive", true); 
 
     let nodes = d3.hierarchy(artistData)
         .sum(function(d) { return d.num_songs; });
@@ -86,7 +95,8 @@ function drawArtistGraph(artistData, parentElem) {
         .attr("fill", "white");
 
      d3.select(self.frameElement)
-         .style("height", height + "px");
+         // .style("height", height + "px");
+         .style("height", "100%")
 
 
 

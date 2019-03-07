@@ -13,7 +13,7 @@
  */
 function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) {
     // TODO: Not hard code the dimensions?
-    let margin = {top: 20, right: 30, bottom: 30, left: 40};
+    let margin = {top: 40, right: 40, bottom: 40, left: 40};
     let width = 480 - margin.left - margin.right,
         height = 270 - margin.top - margin.bottom;
 
@@ -76,8 +76,16 @@ function drawAudioFeatGraph(audioFeature, intervalEndPoints, colId, userSecret) 
         let yAxis = d3.axisLeft().scale(vScale);
 
         let featureSVG = d3.select('#' + colId)
-            .append('svg').attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom);
+            // .append('svg').attr('width', width + margin.left + margin.right)
+            // .attr('height', height + margin.top + margin.bottom)
+            .append("div")
+            .classed("svg-container", true) //container class to make it responsive
+            .append("svg")
+            //responsive SVG needs these 2 attributes and no width and height attr
+            .attr("preserveAspectRatio", "xMinYMin meet")
+            .attr("viewBox", "0 0 600 400")
+            //class to make it responsive
+            .classed("svg-content-responsive", true); 
 
         let featureGraph = featureSVG.append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`)
