@@ -41,6 +41,8 @@ function create_genre_graph(data) {
     // hue: '#00ced1',
     hue: '#0099CC',
   }));
+  // colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+  // colorScale = d3.scaleOrdinal(d3.schemeDark2);
   
   // }}} setup bar colors //
 

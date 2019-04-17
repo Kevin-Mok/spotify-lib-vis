@@ -26,7 +26,11 @@ pip install --user pipenv
 python3 -m venv /path/to/new/virtual/environment
 ```
 
-3. `cd` into the directory you just created a virtual environment in, and clone the GitHub repo.
+3. `cd` into the directory you just created a virtual environment in, and clone the GitHub repo:
+
+```
+git clone https://github.com/Kevin-Mok/spotify-lib-vis
+```
 
 4. Activate the virtual environment from the command line.
 
@@ -40,16 +44,10 @@ source bin/activate
 pip install -r requirements.txt
 ```
 
-6. Run Django migrations.
+6. Run `reset_db.sh` to create the database and start the server.
 
 ```
-manage.py migrate
-```
-
-7. Start the server.
-
-```
-python manage.py runserver
+cd src && ./reset_db.sh
 ```
 
 <!---  }}} installation steps --> 

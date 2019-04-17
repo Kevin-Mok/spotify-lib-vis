@@ -1,9 +1,81 @@
+const log = console.log
+const width = 1366
+const height = 768
+// const width = 1000
+// const height = 500
+
 /**
  * Draws the artist count graph as a bubble chart, and appends it the a designated parent element
  * @param artistData: the artist counts data as an array of objects, of the format {'name': artist name, 'num_songs': 50}
  * @param parentElem: the DOM element to append the artist graph to (as a string)
  */
 function drawArtistGraph(artistData, parentElem) {
+  // const color = d3.scaleOrdinal(d3.schemeCategory10);
+  const color = d3.scaleOrdinal().range(randomColor({//{{{
+    count: Object.keys(artistData.children).length,
+    luminosity: 'light',
+  }))//}}}
+
+  const svg = d3.select(parentElem)//{{{
+  // const svg = d3.select(DOM.svg(width, height))
+      .append("div")
+      .classed("svg-container", true) //container class to make it responsive
+      .append("svg")
+      //responsive SVG needs these 2 attributes and no width and height attr
+      .attr("preserveAspectRatio", "xMinYMin meet")
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      //class to make it responsive
+      .classed("svg-content-responsive", true)
+      .style("width", "100%")
+      .style("height", "100%")
+      .attr("font-size", 12)
+      .attr("text-anchor", "middle")//}}}
+
+  const root = d3.pack()//{{{
+    .size([width - 2, height - 2])
+    .padding(3)
+    (d3.hierarchy(artistData)
+      .sum(d => d.num_songs))
+  
+  const leaf = svg.selectAll("g")
+    .data(root.leaves())
+    .join("g")
+      .attr("transform", d => `translate(${d.x + 1},${d.y + 1})`);//}}}
+
+  leaf.append("circle")//{{{
+      .attr("r", d => d.r)
+      // .attr("fill-opacity", 0.9)
+      .attr("fill", (d, id) => color(id))//}}}
+
+  leaf.append("text")//{{{
+    .selectAll("tspan")
+    .data(d => d.data.name.split(/\s/g).concat([d.data.num_songs]))
+    .join("tspan")
+      .attr("x", 0)
+      .attr("y", (d, i, nodes) => `${i - nodes.length / 2 + 0.8}em`)
+      // .attr("fill", "white")
+      .text(d => d)//}}}
+
+  // hover text {{{ //
+  leaf.append("title")
+    .text(d => `${d.data.name}: ${d.data.num_songs}`)
+  // }}} hover text //
+    
+  // graph title {{{ //
+  svg.append("text")
+    .attr('x', (width / 2.2))
+    .attr('y', 50)
+    .attr('fill', "white")
+    .attr('text-anchor', 'middle')
+    .attr("font-weight", "bold")
+    .attr("font-size", 28)
+    .text('Artists in Library');
+  // }}} graph title //
+
+  return svg.node();
+}
+
+function drawArtistGraphOld(artistData, parentElem) {//{{{
     let margin = {top: 20, right: 30, bottom: 30, left: 40};
     // let width = 1000 - margin.right - margin.left;
     // let height = 1000 - margin.top - margin.bottom;
@@ -36,7 +108,7 @@ function drawArtistGraph(artistData, parentElem) {
         .append("svg")
         //responsive SVG needs these 2 attributes and no width and height attr
         .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", "0 0 600 250")
+        .attr("viewBox", "0 0 1024 768")
         //class to make it responsive
         .classed("svg-content-responsive", true); 
 
@@ -61,9 +133,7 @@ function drawArtistGraph(artistData, parentElem) {
         });
 
     node.append("circle")
-        .attr("r", function(d) {
-            return d.r;
-        })
+        .attr("r", d => d.r) 
         .style("fill", function(d,i) {
             return color(i);
         });
@@ -73,7 +143,8 @@ function drawArtistGraph(artistData, parentElem) {
         .attr("dy", ".2em")
         .style("text-anchor", "middle")
         .text(function(d) {
-            return d.data.name.substring(0, d.r / 3);
+            return d.data.name.substring(0, d.r / 1.5);
+            // return formatArtistName(d.data.name)
         })
         .attr("font-family", "sans-serif")
         .attr("font-size", function(d){
@@ -97,7 +168,4 @@ function drawArtistGraph(artistData, parentElem) {
      d3.select(self.frameElement)
          // .style("height", height + "px");
          .style("height", "100%")
-
-
-
-}
+}//}}}

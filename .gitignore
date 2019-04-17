@@ -4,11 +4,12 @@
 media/history/*
 spotifyvis/static/graphs/sass/*
 
-*.pyc
-*.log
 *.bak
-*.txt
+*.log
 *.map
+*.orig
+*.pyc
+*.txt
 
 api-keys.sh
 db.sqlite3

@@ -8,20 +8,22 @@
   <link rel="stylesheet" href="{% sass_src 'scss/custom.scss' %}">
   <link rel="stylesheet" href="{% sass_src 'graphs/sass/responsive_graph.scss' %}">
   <link rel="stylesheet" href="{% sass_src 'graphs/sass/max-height.scss' %}">
+  {% comment %} <script type="text/javascript" src="http://livejs.com/live.js"></script> {% endcomment %}
+  <script src="https://d3js.org/d3.v5.js"></script>
+  <script src="{% static "graphs/scripts/artist_graph.js" %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.min.js"></script>
 </head>
 <body>
   <div class="container-fluid">
   </div>
-  <script src="https://d3js.org/d3.v5.js"></script>
-  <script src="{% static "graphs/scripts/artist_graph.js" %}"></script>
   <script>
     d3.json("{% url "api:get_artist_data" user_secret %}").then(function(data) {
       // this is the data format needed for bubble charts
       data = {
         children: data
       };
-      {% comment %} drawArtistGraph(data, "body"); {% endcomment %}
       drawArtistGraph(data, ".container-fluid");
+      {% comment %} drawArtistGraphOld(data, ".container-fluid"); {% endcomment %}
     });
   </script>
 </body>
