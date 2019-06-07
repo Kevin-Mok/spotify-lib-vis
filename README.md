@@ -8,7 +8,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-Before starting the setup, make sure Python 3.6 and PostgreSQL is installed on your system.
+Before starting the setup, make sure Python 3 and PostgreSQL is installed on your system.
 
 <!---  installation steps {{{ --> 
 

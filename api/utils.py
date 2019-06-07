@@ -4,19 +4,22 @@ import math
 import os
 import json
 
-from django.db.models import Count, F, Max
-from django.db import IntegrityError
-from django.http import JsonResponse
 from django.core import serializers
-from django.utils import timezone
-from .models import *
-from . import views
-from login.models import User
-from pprint import pprint
-from dateutil.parser import parse
-from datetime import datetime
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
+from django.db.models import Count, F, Max
 from django.db.models import FloatField
 from django.db.models.functions import Cast
+from django.http import JsonResponse
+from django.utils import timezone
+
+from datetime import datetime
+from dateutil.parser import parse
+from pprint import pprint
+
+from . import views
+from .models import *
+from login.models import User
 
 HISTORY_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played'
 
@@ -247,15 +250,21 @@ def save_track_artists(track_dict, artist_genre_queue, user_headers):
     """
     track_artists = []
     for artist_dict in track_dict['artists']:
-        artist_obj, artist_created = Artist.objects.get_or_create(
-                id=artist_dict['id'],
-                name=artist_dict['name'],)
+        try:
+            artist_obj, artist_created = Artist.objects.get_or_create(
+                    id=artist_dict['id'],
+                    name=artist_dict['name'],)
+            if artist_created:
+                artist_genre_queue.append(artist_obj)
+                if len(artist_genre_queue) == views.ARTIST_LIMIT:
+                    add_artist_genres(user_headers, artist_genre_queue)
+                    artist_genre_queue[:] = []
+        #  artist changed name but same id
+        except IntegrityError as e:
+            artist_obj = Artist.objects.get(id=artist_dict['id'])
+            artist_obj.name = artist_dict['name']
+            artist_obj.save()
         # only add/tally up artist genres if new
-        if artist_created:
-            artist_genre_queue.append(artist_obj)
-            if len(artist_genre_queue) == views.ARTIST_LIMIT:
-                add_artist_genres(user_headers, artist_genre_queue)
-                artist_genre_queue[:] = []
         track_artists.append(artist_obj)
 
     return track_artists
