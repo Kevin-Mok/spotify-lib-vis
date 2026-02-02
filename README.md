@@ -1,67 +1,116 @@
-# Spotify Data Visualizer
+# Spotify Library Visualizer
 
-See charts of the artists, genres and features of tracks in your library. Also keep track of your listening history.
+A full-stack web application that visualizes and analyzes your Spotify music library with interactive D3.js charts. Discover insights about your listening habits through artist distribution, genre breakdowns, and audio feature analysis.
+
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Django](https://img.shields.io/badge/Django-2.2-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-required-blue)
+![License](https://img.shields.io/badge/License-GPL-yellow)
+
+## Features
+
+- **Artist Distribution** - Circle packing visualization showing which artists dominate your library
+- **Genre Breakdown** - Stacked bar charts displaying genre distribution with nested artist composition
+- **Audio Feature Analysis** - Scatter plots for track characteristics (danceability, energy, acousticness, valence)
+- **Listening History Tracking** - Persistent record of recently played tracks with CSV import/export
+- **OAuth2 Authentication** - Secure Spotify login with automatic token refresh
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | Python 3, Django 2.2, Django REST Framework 3.9 |
+| **Database** | PostgreSQL with psycopg2 adapter |
+| **Frontend** | D3.js, Bootstrap/Darkly theme, SASS/SCSS |
+| **API Integration** | Spotify Web API with OAuth2 |
+| **Additional** | django-tables2, django-filter, django-compressor |
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Prerequisites
 
-Before starting the setup, make sure Python 3 and PostgreSQL is installed on your system.
+- Python 3.x
+- PostgreSQL
+- Spotify Developer Account ([Create one here](https://developer.spotify.com/dashboard))
 
-<!---  installation steps {{{ --> 
+### Installation
 
-### Installing
+1. **Create and activate virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-1. Use the pip tool to install `virtualenv`. See this [guide](http://docs.python-guide.org/en/latest/dev/virtualenvs/) for further details.
+2. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Kevin-Mok/spotify-lib-vis
+   cd spotify-lib-vis
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set environment variables:**
+   ```bash
+   export SPOTIFY_CLIENT_ID="your_client_id"
+   export SPOTIFY_CLIENT_SECRET="your_client_secret"
+   ```
+
+5. **Initialize database and start server:**
+   ```bash
+   cd src && ./reset_db.sh
+   ```
+
+6. **Access the application:**
+   Open `http://localhost:8000` in your browser
+
+## Architecture
 
 ```
-pip install --user pipenv
+src/
+├── login/          # OAuth2 authentication flow
+├── api/            # Spotify API integration & data processing
+├── graphs/         # D3.js visualization endpoints
+└── templates/      # Django templates with embedded D3
 ```
 
-2. Create a virtual environment.
+## Why This Project is Interesting
 
-```
-python3 -m venv /path/to/new/virtual/environment
-```
+### Technical Highlights
 
-3. `cd` into the directory you just created a virtual environment in, and clone the GitHub repo:
+1. **Real-Time API Integration**
+   - Implements OAuth2 authorization code flow with automatic token refresh
+   - Handles multiple concurrent Spotify API endpoints with rate limit awareness
+   - Intelligent batching (50 tracks/request, 100 features/batch) for efficiency
 
-```
-git clone https://github.com/Kevin-Mok/spotify-lib-vis
-```
+2. **Interactive D3.js Visualizations**
+   - Circle packing algorithm with dynamic space allocation
+   - Responsive SVG viewBox scaling for device compatibility
+   - Dynamic color palette generation based on data cardinality
 
-4. Activate the virtual environment from the command line.
+3. **Efficient Data Modeling**
+   - Normalized database schema with Many-to-Many relationships
+   - Prevents data duplication across users while enabling per-user queries
+   - Query optimization using Django ORM annotations and aggregations
 
-```
-source bin/activate
-```
+4. **Queue-Based Batch Processing**
+   - Configurable batch limits for tracks, features, and artists
+   - Processes queued items efficiently to maximize API throughput
 
-5. `cd` into the repository root directory and install all dependencies using `pip`.
+### Skills Demonstrated
 
-```
-pip install -r requirements.txt
-```
-
-6. Run `reset_db.sh` to create the database and start the server.
-
-```
-cd src && ./reset_db.sh
-```
-
-<!---  }}} installation steps --> 
-
-## Built With
-
-* [Django](https://www.djangoproject.com/)
-* [Spotify Web API](https://github.com/spotify/web-api)
-* [pip packages used](requirements.txt)
+- **Full-Stack Development**: Django backend with D3.js frontend
+- **API Integration**: OAuth2 flows, rate limiting, batch processing
+- **Database Design**: Normalized schema, efficient queries
+- **Data Visualization**: Interactive charts with real-time updates
+- **DevOps**: Environment configuration, database management
 
 ## Authors
 
-* [Kevin Mok](https://github.com/Kevin-Mok)
-* [Chris Shyi](https://github.com/chrisshyi)
+- [Kevin Mok](https://github.com/Kevin-Mok)
+- [Chris Shyi](https://github.com/chrisshyi)
 
 ## License
 
