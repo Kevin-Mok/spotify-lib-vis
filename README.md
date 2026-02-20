@@ -107,6 +107,52 @@ src/
 - **Data Visualization**: Interactive charts with real-time updates
 - **DevOps**: Environment configuration, database management
 
+## Resume-ready points by variant
+
+### `general`
+- Built a full-stack Spotify analytics platform combining Django backend and D3 visualizations to surface actionable listening insights from personal libraries.
+- Delivered OAuth2-secured ingestion, normalized storage, and interactive chart experiences for data-rich user exploration.
+
+### `web-dev`
+- Implemented interactive D3 dashboards including circle packing, stacked bars, and scatter plots with responsive SVG behavior.
+- Built Django template-driven frontend flows that translate complex music data into intuitive, user-facing visual narratives.
+
+### `aws`
+- Architected API ingestion and batch-processing workflows with configurable limits, reflecting cloud-oriented throughput and reliability patterns.
+- Structured environment-based configuration and scalable data pipelines suited for hosted analytics applications.
+
+### `python`
+- Developed Python and Django services for OAuth2 integration, data modeling, and query-efficient analytics endpoints.
+- Implemented batch processing and ORM-optimized querying to handle high-volume track, feature, and artist datasets efficiently.
+
+### `aws-web-dev`
+- Combined frontend data-visualization delivery with backend pipeline discipline, bridging product UX and infrastructure-aware operations.
+- Balanced chart interactivity with ingestion performance to support reliable deployment in cloud-hosted analytics environments.
+
+### `aws-python`
+- Built Python analytics workflows with batch queues and API rate-awareness that map directly to cloud deployment scenarios.
+- Prioritized maintainable backend architecture for scalable data refresh cycles and infrastructure-integrated monitoring.
+
+### `web-dev-django`
+- Implemented Django and D3 integration patterns that map naturally to full-stack Python web applications with data-heavy interfaces.
+- Structured reusable backend-to-frontend contracts for robust visualization rendering and future feature expansion.
+
+### `it-support`
+- Improved supportability with clear auth-flow boundaries, documented setup steps, and predictable data-pipeline behavior.
+- Designed user-facing analytics views that reduce confusion and simplify troubleshooting of ingestion and visualization issues.
+
+### `it-support-aws`
+- Built operationally clear batch and OAuth boundaries that help support teams isolate issues in hosted environments.
+- Structured configuration and processing flows for faster incident diagnosis across API, database, and visualization layers.
+
+### `sales`
+- Framed complex listening analytics into compelling product value, strengthening demo effectiveness and user conversion discussions.
+- Combined technical depth and polished visualization storytelling to support persuasive, data-driven product narratives.
+
+### `call-centre`
+- Built clear, interpretable charts and workflow messaging that reduce repetitive user questions in high-volume support scenarios.
+- Structured onboarding and data-refresh expectations so support responses remain fast, accurate, and consistent.
+
 ## Authors
 
 - [Kevin Mok](https://github.com/Kevin-Mok)
