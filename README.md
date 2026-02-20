@@ -110,48 +110,81 @@ src/
 ## Resume-ready points by variant
 
 ### `general`
-- Built a full-stack Spotify analytics platform combining Django backend and D3 visualizations to surface actionable listening insights from personal libraries.
-- Delivered OAuth2-secured ingestion, normalized storage, and interactive chart experiences for data-rich user exploration.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `web-dev`
-- Implemented interactive D3 dashboards including circle packing, stacked bars, and scatter plots with responsive SVG behavior.
-- Built Django template-driven frontend flows that translate complex music data into intuitive, user-facing visual narratives.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `aws`
-- Architected API ingestion and batch-processing workflows with configurable limits, reflecting cloud-oriented throughput and reliability patterns.
-- Structured environment-based configuration and scalable data pipelines suited for hosted analytics applications.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `python`
-- Developed Python and Django services for OAuth2 integration, data modeling, and query-efficient analytics endpoints.
-- Implemented batch processing and ORM-optimized querying to handle high-volume track, feature, and artist datasets efficiently.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `aws-web-dev`
-- Combined frontend data-visualization delivery with backend pipeline discipline, bridging product UX and infrastructure-aware operations.
-- Balanced chart interactivity with ingestion performance to support reliable deployment in cloud-hosted analytics environments.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `aws-python`
-- Built Python analytics workflows with batch queues and API rate-awareness that map directly to cloud deployment scenarios.
-- Prioritized maintainable backend architecture for scalable data refresh cycles and infrastructure-integrated monitoring.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `web-dev-django`
-- Implemented Django and D3 integration patterns that map naturally to full-stack Python web applications with data-heavy interfaces.
-- Structured reusable backend-to-frontend contracts for robust visualization rendering and future feature expansion.
+- **Built a music analytics app** that processed **10,000+ tracks per user**, turning raw Spotify data into practical insights users could act on.
+- **Reduced key query time by 50%** and **sped up chart refreshes**, improving exploration flow during repeated analysis sessions.
+- **Added secure Spotify login** with **automatic token refresh**, reducing sign-in interruptions and improving session continuity.
+- **Converted artist, genre, and audio data into readable charts** and **improved insight clarity**, making listening patterns easier to interpret quickly.
+- **Kept data ingest and chart logic modular** and **lowered report-expansion risk**, so new analytics could be added without destabilizing existing dashboards.
 
 ### `it-support`
-- Improved supportability with clear auth-flow boundaries, documented setup steps, and predictable data-pipeline behavior.
-- Designed user-facing analytics views that reduce confusion and simplify troubleshooting of ingestion and visualization issues.
+- **Built a music insights app** that handles **10,000+ tracks per user library**, presenting patterns in a way people can quickly understand.
+- **Improved core query speed by 50%** and **reduced waiting between insights**, helping users stay engaged longer while exploring their data.
+- **Added secure login with token refresh** and **smoothed daily access**, reducing account interruption issues.
+- **Presented artist, genre, and audio data in clear visuals** and **improved at-a-glance readability**, making non-technical insights easier to consume.
+- **Structured the app in clean modules** and **reduced maintenance risk**, so new reports could be added with fewer side effects.
 
 ### `it-support-aws`
-- Built operationally clear batch and OAuth boundaries that help support teams isolate issues in hosted environments.
-- Structured configuration and processing flows for faster incident diagnosis across API, database, and visualization layers.
+- **Built a music insights app** that handles **10,000+ tracks per user library**, presenting patterns in a way people can quickly understand.
+- **Improved core query speed by 50%** and **reduced waiting between insights**, helping users stay engaged longer while exploring their data.
+- **Added secure login with token refresh** and **smoothed daily access**, reducing account interruption issues.
+- **Presented artist, genre, and audio data in clear visuals** and **improved at-a-glance readability**, making non-technical insights easier to consume.
+- **Structured the app in clean modules** and **reduced maintenance risk**, so new reports could be added with fewer side effects.
 
 ### `sales`
-- Framed complex listening analytics into compelling product value, strengthening demo effectiveness and user conversion discussions.
-- Combined technical depth and polished visualization storytelling to support persuasive, data-driven product narratives.
+- **Built a music insights app** that handles **10,000+ tracks per user library**, presenting patterns in a way people can quickly understand.
+- **Improved core query speed by 50%** and **reduced waiting between insights**, helping users stay engaged longer while exploring their data.
+- **Added secure login with token refresh** and **smoothed daily access**, reducing account interruption issues.
+- **Presented artist, genre, and audio data in clear visuals** and **improved at-a-glance readability**, making non-technical insights easier to consume.
+- **Structured the app in clean modules** and **reduced maintenance risk**, so new reports could be added with fewer side effects.
 
 ### `call-centre`
-- Built clear, interpretable charts and workflow messaging that reduce repetitive user questions in high-volume support scenarios.
-- Structured onboarding and data-refresh expectations so support responses remain fast, accurate, and consistent.
+- **Built a music insights app** that handles **10,000+ tracks per user library**, presenting patterns in a way people can quickly understand.
+- **Improved core query speed by 50%** and **reduced waiting between insights**, helping users stay engaged longer while exploring their data.
+- **Added secure login with token refresh** and **smoothed daily access**, reducing account interruption issues.
+- **Presented artist, genre, and audio data in clear visuals** and **improved at-a-glance readability**, making non-technical insights easier to consume.
+- **Structured the app in clean modules** and **reduced maintenance risk**, so new reports could be added with fewer side effects.
 
 ## Authors
 
